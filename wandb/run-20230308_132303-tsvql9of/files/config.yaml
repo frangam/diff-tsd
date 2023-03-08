@@ -1,0 +1,159 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.13.10
+    code_path: code/train.py
+    framework: xgboost
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.9.2
+    start_time: 1678278183.13818
+    t:
+      1:
+      - 1
+      - 5
+      - 6
+      - 41
+      - 53
+      - 55
+      - 71
+      2:
+      - 1
+      - 5
+      - 6
+      - 41
+      - 49
+      - 51
+      - 53
+      - 55
+      - 71
+      3:
+      - 1
+      - 16
+      - 23
+      4: 3.9.2
+      5: 0.13.10
+      8:
+      - 5
+batch_size:
+  desc: null
+  value: 64
+config:
+  desc: null
+  value:
+    dataset:
+      image_key: image
+      location: frangam/WISDM-mod-recurrence-plot
+      type: huggingface
+    ema_sched:
+      max_value: 0.9999
+      power: 0.6667
+      type: inverse
+    lr_sched:
+      type: constant
+    model:
+      augment_prob: 0.12
+      augment_wrapper: true
+      channels:
+      - 128
+      - 256
+      - 512
+      cross_attn_depths: null
+      cross_cond_dim: 0
+      depths:
+      - 2
+      - 4
+      - 4
+      dropout_rate: 0.05
+      has_variance: true
+      input_channels: 3
+      input_size:
+      - 32
+      - 32
+      mapping_cond_dim: 0
+      mapping_out: 256
+      patch_size: 1
+      self_attn_depths:
+      - false
+      - true
+      - true
+      sigma_data: 0.5
+      sigma_max: 80
+      sigma_min: 0.01
+      sigma_sample_density:
+        mean: -1.2
+        std: 1.2
+        type: lognormal
+      skip_stages: 0
+      type: image_v1
+      unet_cond_dim: 0
+    optimizer:
+      betas:
+      - 0.95
+      - 0.999
+      eps: 1.0e-06
+      lr: 0.0001
+      type: adamw
+      weight_decay: 0.001
+demo_every:
+  desc: null
+  value: 500
+evaluate_every:
+  desc: null
+  value: 10000
+evaluate_n:
+  desc: null
+  value: 2000
+gns:
+  desc: null
+  value: false
+grad_accum_steps:
+  desc: null
+  value: 1
+grow:
+  desc: null
+  value: null
+grow_config:
+  desc: null
+  value: null
+lr:
+  desc: null
+  value: null
+name:
+  desc: null
+  value: fold0_walking
+num_workers:
+  desc: null
+  value: 8
+parameters:
+  desc: null
+  value: 66121860
+resume:
+  desc: null
+  value: null
+sample_n:
+  desc: null
+  value: 64
+save_every:
+  desc: null
+  value: 10000
+seed:
+  desc: null
+  value: null
+start_method:
+  desc: null
+  value: spawn
+wandb_entity:
+  desc: null
+  value: frangam
+wandb_group:
+  desc: null
+  value: null
+wandb_project:
+  desc: null
+  value: diffusion-ts-rp
+wandb_save_model:
+  desc: null
+  value: false

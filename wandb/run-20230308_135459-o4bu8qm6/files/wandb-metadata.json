@@ -1,0 +1,272 @@
+{
+    "os": "Linux-5.10.0-20-amd64-x86_64-with-glibc2.31",
+    "python": "3.9.2",
+    "heartbeatAt": "2023-03-08T12:54:59.776598",
+    "startedAt": "2023-03-08T12:54:59.032959",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--config",
+        "tgen/configs/config_wisdm_32x32.json",
+        "--name",
+        "fold0_walking",
+        "--wandb-entity",
+        "frangam",
+        "--wandb-project",
+        "diffusion-ts-rp",
+        "--current-fold",
+        "0",
+        "--class-label",
+        "0",
+        "--max-epochs",
+        "20000"
+    ],
+    "state": "running",
+    "program": "/home/fmgarmor/proyectos/TGEN-timeseries-generation/train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "https://bitbucket.org/miot-health/tgen-timeseries-generation.git",
+        "commit": "ba8fbc1eeecda6f119a4bffcf8c7e37168c78208"
+    },
+    "email": null,
+    "root": "/home/fmgarmor/proyectos/TGEN-timeseries-generation",
+    "host": "lsicomputing",
+    "username": "fmgarmor",
+    "executable": "/home/fmgarmor/miot_env/bin/python3",
+    "cpu_count": 20,
+    "cpu_count_logical": 40,
+    "cpu_freq": {
+        "current": 1013.6583,
+        "min": 1000.0,
+        "max": 3200.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1000.373,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.207,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1001.637,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.175,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.118,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.308,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.857,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1008.219,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.446,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.561,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.27,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.349,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.651,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.269,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.541,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.502,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1185.129,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.035,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.677,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.195,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.63,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.686,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1105.671,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.693,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.499,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1001.196,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.256,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1015.028,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.642,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.645,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.493,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.705,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.084,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.486,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.218,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.582,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1025.9,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.344,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1000.204,
+            "min": 1000.0,
+            "max": 3200.0
+        },
+        {
+            "current": 1021.235,
+            "min": 1000.0,
+            "max": 3200.0
+        }
+    ],
+    "disk": {
+        "total": 49.9755859375,
+        "used": 39.250267028808594
+    },
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_count": 4,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3090",
+            "memory_total": 25447170048
+        },
+        {
+            "name": "NVIDIA GeForce RTX 2080 Ti",
+            "memory_total": 11554717696
+        },
+        {
+            "name": "Tesla V100-PCIE-32GB",
+            "memory_total": 34089730048
+        },
+        {
+            "name": "NVIDIA GeForce RTX 2080 Ti",
+            "memory_total": 11554717696
+        }
+    ],
+    "memory": {
+        "total": 93.0644760131836
+    }
+}

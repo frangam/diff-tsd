@@ -67,3 +67,14 @@ Thumbs.db
 # Our Project Local files for results
 demo/
 results/
+wandb/
+venv*
+__pycache__
+.ipynb_checkpoints
+*.pth
+*.egg-info
+data
+*_demo_*.png
+*.csv
+.env
+
