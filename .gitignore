@@ -64,3 +64,6 @@ Thumbs.db
 *.vsix
 
 
+# Our Project Local files for results
+demo/
+results/
