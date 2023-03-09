@@ -1,4 +1,9 @@
 # Training
+First, activate your Python VENV where you have all dependencies installed:
+
+```sh
+$ source ~/YOUR_VENV/bin/activate
+```
 
 Multi-GPU and multi-node training is supported with [Hugging Face Accelerate](https://huggingface.co/docs/accelerate/index). You can configure Accelerate by running:
 
@@ -18,6 +23,28 @@ Also, you can run the script with [nohup](https://en.wikipedia.org/wiki/Nohup) w
 
 ```sh
 $ nohup accelerate launch train.py --config CONFIG_FILE --name RUN_NAME --wandb-entity frangam --wandb-project diffusion-ts-rp --current-fold 0 --class-label 0 --max-epochs 2000 > results/fold_0.log &
+```
+
+In addition, to close remote terminal safely, you have to run the exit commant, and do not close manually the terminal:
+
+```sh
+$ exit
+```
+
+Finally, you can identify the running processes of training script with:
+```sh
+$ ps ax | grep test.py
+```
+
+or list of all running processes of Python:
+```sh
+$ ps -fA | grep python
+```
+
+then, kill the desired one:
+
+```sh
+$ kill PID
 ```
 
 ---
