@@ -19,6 +19,7 @@ $ accelerate launch train.py --config CONFIG_FILE --name RUN_NAME --wandb-entity
 
 on all nodes.
 
+### Execution in background 
 Also, you can run the script with [nohup](https://en.wikipedia.org/wiki/Nohup) which ignores the hangup signal. This means that you can close the terminal without stopping the execution. Also, don’t forget to add & so the script runs in the background:
 
 ```sh
@@ -33,7 +34,7 @@ $ exit
 
 Finally, you can identify the running processes of training script with:
 ```sh
-$ ps ax | grep test.py
+$ ps ax | grep train.py
 ```
 
 or list of all running processes of Python:
