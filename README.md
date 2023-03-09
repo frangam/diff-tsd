@@ -1,35 +1,24 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+# Training
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+Multi-GPU and multi-node training is supported with [Hugging Face Accelerate](https://huggingface.co/docs/accelerate/index). You can configure Accelerate by running:
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+```sh
+$ accelerate config
+```
 
----
+on all nodes, then running:
 
-## Edit a file
+```sh
+$ accelerate launch train.py --config CONFIG_FILE --name RUN_NAME --wandb-entity frangam --wandb-project diffusion-ts-rp --current-fold 0 --class-label 0 --max-epochs 2000 > results/fold_0.log
+```
 
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
+on all nodes.
 
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
+Also, you can run the script with [nohup](https://en.wikipedia.org/wiki/Nohup) which ignores the hangup signal. This means that you can close the terminal without stopping the execution. Also, don’t forget to add & so the script runs in the background:
 
----
-
-## Create a file
-
-Next, you’ll add a new file to this repository.
-
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
-
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
+```sh
+$ nohup accelerate launch train.py --config CONFIG_FILE --name RUN_NAME --wandb-entity frangam --wandb-project diffusion-ts-rp --current-fold 0 --class-label 0 --max-epochs 2000 > results/fold_0.log &
+```
 
 ---
 
