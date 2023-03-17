@@ -65,6 +65,7 @@ Thumbs.db
 
 
 # Our Project Local files for results
+nohup*
 demo/
 results/
 wandb/
@@ -77,4 +78,6 @@ data
 *_demo_*.png
 *.csv
 .env
+downloads/*
+dow.py
 

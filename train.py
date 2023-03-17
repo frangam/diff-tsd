@@ -23,7 +23,7 @@ def main():
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     p.add_argument('--batch-size', type=int, default=64,
                    help='the batch size')
-    p.add_argument('--max-epochs', type=int, required=True, default=20000,
+    p.add_argument('--max-epochs', type=int, required=True, default=10000,
                    help='the maximum epochs')
     p.add_argument('--current-fold', type=int, required=True, default=0,
                    help='the current fold of k-fold validation')
@@ -33,7 +33,7 @@ def main():
                    help='the configuration file')
     p.add_argument('--demo-every', type=int, default=500,
                    help='save a demo grid every this many steps')
-    p.add_argument('--evaluate-every', type=int, default=10000,
+    p.add_argument('--evaluate-every', type=int, default=5000,
                    help='save a demo grid every this many steps')
     p.add_argument('--evaluate-n', type=int, default=2000,
                    help='the number of samples to draw to evaluate')
@@ -82,8 +82,9 @@ def main():
     sched_config = config['lr_sched']
     ema_sched_config = config['ema_sched']
 
-    os.makedirs(f"demo/fold_{args.current_fold}", exist_ok=True)
-    os.makedirs(f"results/", exist_ok=True)
+    os.makedirs(f"demo/fold_{args.current_fold}/class_{args.class_label}", exist_ok=True)
+    os.makedirs(f"results/fold_{args.current_fold}/class_{args.class_label}", exist_ok=True)
+
 
 
     # TODO: allow non-square input sizes
@@ -99,7 +100,16 @@ def main():
         seeds = torch.randint(-2 ** 63, 2 ** 63 - 1, [accelerator.num_processes], generator=torch.Generator().manual_seed(args.seed))
         torch.manual_seed(seeds[accelerator.process_index])
 
-    inner_model = K.config.make_model(config)
+    # inner_model = K.config.make_model(config)
+    inner_model = K.models.ImageDenoiserModelV1(
+        model_config['input_channels'], # input channels
+        model_config['mapping_out'], # mapping out
+        model_config['depths'], # depths
+        model_config['channels'], # channels
+        model_config['self_attn_depths']
+        ) # self attention
+
+
     inner_model_ema = deepcopy(inner_model)
     if accelerator.is_main_process:
         print('Parameters:', K.utils.n_params(inner_model))
@@ -151,6 +161,7 @@ def main():
         transforms.Resize(size[0], interpolation=transforms.InterpolationMode.LANCZOS),
         transforms.CenterCrop(size[0]),
         K.augmentation.KarrasAugmentationPipeline(model_config['augment_prob']),
+        
     ])
 
     if dataset_config['type'] == 'imagefolder':
@@ -161,11 +172,11 @@ def main():
         train_set = datasets.MNIST(dataset_config['location'], train=True, download=True, transform=tf)
     elif dataset_config['type'] == 'huggingface':
         from datasets import load_dataset
-        train_set = load_dataset(f"{dataset_config['location']}{args.current_fold}")
+        train_set = load_dataset(f"{dataset_config['location']}{args.current_fold}", split="train")
         train_set = train_set.filter(lambda t: t["label"] == args.class_label)
-        print("FOLD:", args.current_fold, "CLASS LABEL:", args.class_label)
         train_set.set_transform(partial(K.utils.hf_datasets_augs_helper, transform=tf, image_key=dataset_config['image_key']))
-        train_set = train_set['train']
+        #train_set = train_set['train']
+        print("FOLD:", args.current_fold, "CLASS LABEL:", args.class_label, "DATA LENGTH:", len(train_set))
     else:
         raise ValueError('Invalid dataset type')
 
@@ -176,6 +187,7 @@ def main():
             pass
 
     image_key = dataset_config.get('image_key', 0)
+    print("IMAGE KEY:", image_key)
 
     train_dl = data.DataLoader(train_set, args.batch_size, shuffle=True, drop_last=True,
                                num_workers=args.num_workers, persistent_workers=True)
@@ -206,10 +218,10 @@ def main():
     sigma_max = model_config['sigma_max']
     sample_density = K.config.make_sample_density(model_config)
 
-    model = K.config.make_denoiser_wrapper(config)(inner_model)
-    model_ema = K.config.make_denoiser_wrapper(config)(inner_model_ema)
+    model = K.layers.Denoiser(inner_model, sigma_data=model_config["sigma_data"]).to(device) #K.config.make_denoiser_wrapper(config)(inner_model)
+    model_ema = K.layers.Denoiser(inner_model_ema, sigma_data=model_config["sigma_data"]).to(device) #K.config.make_denoiser_wrapper(config)(inner_model_ema)
 
-    state_path = Path(f'results/{args.name}_state.json')
+    state_path = Path(f'results/fold_{args.current_fold}/class_{args.class_label}/{args.name}_state.json')
 
     if state_path.exists() or args.resume:
         if args.resume:
@@ -243,19 +255,19 @@ def main():
             print('Computing features for reals...')
         reals_features = K.evaluation.compute_features(accelerator, lambda x: next(train_iter)[image_key][1], extractor, args.evaluate_n, args.batch_size)
         if accelerator.is_main_process:
-            metrics_log = K.utils.CSVLogger(f'results/{args.name}_metrics.csv', ['step', 'fid', 'kid'])
+            metrics_log = K.utils.CSVLogger(f'results/fold_{args.current_fold}/class_{args.class_label}/{args.name}_metrics.csv', ['step', 'fid', 'kid'])
         del train_iter
 
     @torch.no_grad()
-    @K.utils.eval_mode(model_ema)
+    @K.utils.eval_mode(model)
     def demo():
         if accelerator.is_main_process:
             tqdm.write('Sampling...')
-        filename = f'demo/fold_{args.current_fold}/{args.name}_demo_{step:08}.png'
+        filename = f'demo/fold_{args.current_fold}/class_{args.class_label}/{args.name}_demo_{step:08}.png'
         n_per_proc = math.ceil(args.sample_n / accelerator.num_processes)
         x = torch.randn([n_per_proc, model_config['input_channels'], size[0], size[1]], device=device) * sigma_max
         sigmas = K.sampling.get_sigmas_karras(50, sigma_min, sigma_max, rho=7., device=device)
-        x_0 = K.sampling.sample_dpmpp_2m(model_ema, x, sigmas, disable=not accelerator.is_main_process)
+        x_0 = K.sampling.sample_lms(model, x, sigmas, disable=not accelerator.is_main_process)
         x_0 = accelerator.gather(x_0)[:args.sample_n]
         if accelerator.is_main_process:
             grid = utils.make_grid(x_0, nrow=math.ceil(args.sample_n ** 0.5), padding=0)
@@ -264,7 +276,7 @@ def main():
                 wandb.log({'demo_grid': wandb.Image(filename)}, step=step)
 
     @torch.no_grad()
-    @K.utils.eval_mode(model_ema)
+    @K.utils.eval_mode(model)
     def evaluate():
         if not evaluate_enabled:
             return
@@ -273,7 +285,7 @@ def main():
         sigmas = K.sampling.get_sigmas_karras(50, sigma_min, sigma_max, rho=7., device=device)
         def sample_fn(n):
             x = torch.randn([n, model_config['input_channels'], size[0], size[1]], device=device) * sigma_max
-            x_0 = K.sampling.sample_dpmpp_2m(model_ema, x, sigmas, disable=True)
+            x_0 = K.sampling.sample_lms(model, x, sigmas, disable=True)
             return x_0
         fakes_features = K.evaluation.compute_features(accelerator, sample_fn, extractor, args.evaluate_n, args.batch_size)
         if accelerator.is_main_process:
@@ -287,7 +299,7 @@ def main():
 
     def save():
         accelerator.wait_for_everyone()
-        filename = f'results/{args.name}_{step:08}.pth'
+        filename = f'results/fold_{args.current_fold}/class_{args.class_label}/{args.name}_{step:08}.pth'
         if accelerator.is_main_process:
             tqdm.write(f'Saving to {filename}...')
         obj = {
@@ -311,23 +323,33 @@ def main():
         while epoch <= args.max_epochs:
             for batch in tqdm(train_dl, disable=not accelerator.is_main_process):
                 with accelerator.accumulate(model):
-                    reals, _, aug_cond = batch[image_key]
-                    noise = torch.randn_like(reals)
-                    sigma = sample_density([reals.shape[0]], device=device)
-                    losses = model.loss(reals, noise, sigma, aug_cond=aug_cond)
+                    
+                    reals, reals_no_aug, aug_cond = batch[image_key]
+
+                    # grid = utils.make_grid(reals, nrow=math.ceil(len(reals) ** 0.5), padding=0)
+                    # K.utils.to_pil_image(grid).save(f'results/fold_{args.current_fold}/{args.name}_reals_{step:08}.png')
+                    # grid = utils.make_grid(reals_no_aug, nrow=math.ceil(len(reals_no_aug) ** 0.5), padding=0)
+                    # K.utils.to_pil_image(grid).save(f'results/fold_{args.current_fold}/{args.name}_reals-noaug_{step:08}.png')
+
+                    noise = torch.randn_like(reals_no_aug)
+                    # sigma = sample_density([reals_no_aug.shape[0]], device=device)
+                    sigma = torch.distributions.LogNormal(model_config["sigma_sample_density"]["mean"], model_config["sigma_sample_density"]["std"]).sample([reals_no_aug.shape[0]]).to(device)
+
+                    losses = model.loss(reals_no_aug, noise, sigma) #, aug_cond=aug_cond)
                     losses_all = accelerator.gather(losses)
                     loss = losses_all.mean()
+                    # print("LOSSES_ALL:", losses_all, "MEAN:",loss)
                     accelerator.backward(losses.mean())
                     if args.gns:
                         sq_norm_small_batch, sq_norm_large_batch = gns_stats_hook.get_stats()
-                        gns_stats.update(sq_norm_small_batch, sq_norm_large_batch, reals.shape[0], reals.shape[0] * accelerator.num_processes)
+                        gns_stats.update(sq_norm_small_batch, sq_norm_large_batch, reals_no_aug.shape[0], reals_no_aug.shape[0] * accelerator.num_processes)
                     opt.step()
-                    sched.step()
+                    sched.step() #learning scheduler just to kind of improve training stability
                     opt.zero_grad()
-                    if accelerator.sync_gradients:
-                        ema_decay = ema_sched.get_value()
-                        K.utils.ema_update(model, model_ema, ema_decay)
-                        ema_sched.step()
+                    # if accelerator.sync_gradients:
+                    #     ema_decay = ema_sched.get_value()
+                    #     K.utils.ema_update(model, model_ema, ema_decay)
+                    #     ema_sched.step()
 
                 if accelerator.is_main_process:
                     if step % 25 == 0:
@@ -341,7 +363,7 @@ def main():
                         'epoch': epoch,
                         'loss': loss.item(),
                         'lr': sched.get_last_lr()[0],
-                        'ema_decay': ema_decay,
+                        # 'ema_decay': ema_decay,
                     }
                     if args.gns:
                         log_dict['gradient_noise_scale'] = gns_stats.get_gns()
