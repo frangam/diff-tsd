@@ -22,7 +22,7 @@ from tgen import eval
 def main():
     '''Examples of runs:
     - train with synthetic images
-    $  nohup ./eval_diffusion.py --model-name resnet50 --prefix exp-all-classes --epochs 100 --synth-train --config configs/config_wisdm_128x128_loso.json > results/evaluation_synthetic_quality/exp-all-classes/eval.log &
+    $  nohup ./eval_diffusion.py --model-name resnet50 --prefix exp-classes-all-classes --epochs 100 --synth-train --config configs/config_wisdm_128x128_loso.json > results/evaluation_synthetic_quality/loso/exp-classes-all-classes/eval.log &
 
     $  nohup ./eval_diffusion.py --model-name resnet50 --prefix exp-classes-3-4 --epochs 100 --synth-train > results/evaluation_synthetic_quality/exp-classes-3-4/eval.log &
     
@@ -39,15 +39,15 @@ def main():
     p.add_argument('--synth-train', action="store_true",
                    help='use synthetic images for train; if not, use real images') 
     p.add_argument('--prefered-device', type=int, default=-1, help='the prefered device to run the model')    
-    p.add_argument('--img-batch-size', type=int, default=64,
+    p.add_argument('--img-batch-size', type=int, default=16,
                    help='the batch size for loading the images')         
-    p.add_argument('--batch-size', type=int, default=256,
+    p.add_argument('--batch-size', type=int, default=16,
                    help='the batch size for the neural network')
-    p.add_argument('--image-size', type=int, default=32,
+    p.add_argument('--image-size', type=int, default=128,
                    help='the image resolution size')
     p.add_argument('--n-folds', type=int, default=3,
                    help='the number of folds')
-    p.add_argument('--prefix', type=str, default='exp-all-classes',
+    p.add_argument('--prefix', type=str, default='exp-classes-all-classes',
                    help='the output prefix')
     p.add_argument('--epochs', type=int, default=100,
                    help='the number of epochs')
@@ -124,8 +124,15 @@ def main():
         # from tgen.preprocess_crop import preprocess_crop
         #training data are the synthetic images
         
-        
-        if val_split > 0:
+        if val_split < 0:
+            train_data_generator = train_idg.flow_from_dataframe(train_data, batch_size=img_batch_size, target_size=(img_size, img_size), directory = train_path,
+                            x_col = "filename", y_col = "label",
+                            # class_mode = "raw", 
+                            class_mode="categorical",
+                            shuffle = True, seed=33
+                            )
+            valid_data_generator = None
+        elif val_split > 0:
             train_data_generator = train_idg.flow_from_dataframe(train_data, batch_size=img_batch_size, target_size=(img_size, img_size), directory = train_path,
                         subset='training',
                         x_col = "filename", y_col = "label",

@@ -331,7 +331,6 @@ def fit(dir_path, name, kfold, model, train_ds, val_ds, epochs, batch_size, devi
     print(model.summary())
 
   STEP_SIZE_TRAIN=train_ds.n//train_ds.batch_size
-  STEP_SIZE_VALID=val_ds.n//val_ds.batch_size
   # if device >= 0:
   #   with tf.device(f'/device:GPU:{device}'):
   #     history = model.fit(train_ds,
@@ -342,13 +341,22 @@ def fit(dir_path, name, kfold, model, train_ds, val_ds, epochs, batch_size, devi
   #                         epochs=epochs
   #     )
   # else:
-  history = model.fit(train_ds,
-                        steps_per_epoch=STEP_SIZE_TRAIN,
-                        validation_data=val_ds,
-                        validation_steps=STEP_SIZE_VALID,
-                        callbacks=callback_list,
-                        epochs=epochs
+  if val_ds is None:
+    history = model.fit(train_ds,
+                          steps_per_epoch=STEP_SIZE_TRAIN,
+                          callbacks=callback_list,
+                          epochs=epochs
     )
+  else:
+    STEP_SIZE_VALID=val_ds.n//val_ds.batch_size
+
+    history = model.fit(train_ds,
+                          steps_per_epoch=STEP_SIZE_TRAIN,
+                          validation_data=val_ds,
+                          validation_steps=STEP_SIZE_VALID,
+                          callbacks=callback_list,
+                          epochs=epochs
+      )
 
 
   # if device >= 0:
