@@ -80,5 +80,6 @@ data
 .env
 downloads/*
 dow.py
+dow-1m.py
 
 libdevice.10.bc
