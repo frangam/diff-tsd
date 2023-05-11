@@ -1,4 +1,5 @@
 #!/home/fmgarmor/miot_env/bin/python3
+import argparse
 
 import os
 import numpy as np
@@ -9,6 +10,8 @@ from scipy.sparse.csgraph import dijkstra
 from sklearn.metrics import pairwise_distances
 from sklearn.manifold import MDS
 import matplotlib.pyplot as plt
+from datasets import load_dataset
+
 
 # from tqdm.notebook import tqdm, trange #progress bars for jupyter notebook
 from tqdm.auto import trange, tqdm #progress bars for pyhton files (not jupyter notebook)
@@ -85,7 +88,7 @@ def reconstruct_time_series(shortest_path_matrix, ep=0.0, small_constant=1e-10):
     return selected_column
 
 
-def reconstruct(dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/", TIME_STEPS=129):
+def reconstruct_original_data(dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/", TIME_STEPS=129):
     x_reconstructed = []
     sj_reconstructed = []
     y_reconstructed = []
@@ -119,6 +122,7 @@ def reconstruct(dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generat
                 # STEP 1: generate Recurrence plot image
                 #------------------------------------------------------------------
                 img = recurrence_plots.SavevarRP_XYZ(original_window, sub, window_id, normalized = NORMALIZE, saveImage=False)
+                img = np.array(img)
                 # plt.imshow(img)
                 # plt.show()
 
@@ -196,26 +200,121 @@ def reconstruct(dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generat
     np.save(f"{dataset_folder}numpies/train/times-series-reconstruction/y_reconstructed.npy" , np.array(y_reconstructed))
     np.save(f"{dataset_folder}numpies/train/times-series-reconstruction/sj_reconstructed.npy" , np.array(sj_reconstructed))
 
+def reconstruct_from_synthetic_images(dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generation/results/loso/fold_0/", visualization_savepath="/home/fmgarmor/proyectos/TGEN-timeseries-generation/results/loso/visualization_fold_0/", sampling="loso", TIME_STEPS=129):
+    x_reconstructed = []
+    y_reconstructed = []
+    print(dataset_folder)
+    print(os.listdir(dataset_folder))
+    classes_filenames = [filename for filename in os.listdir(dataset_folder) if os.path.isdir(os.path.join(dataset_folder, filename))]
+    classes = [int(cl.split("_")[1]) if "_" else int(cl) in cl for cl in classes_filenames]
+    
+    print(classes_filenames)
+    print(classes)
+    
+    for cl_i in  tqdm(range(len(np.unique(classes_filenames))), f"class"):
+        cl_filename = np.unique(classes_filenames)[cl_i]
+        cl = np.unique(classes)[cl_i]
+        print("class:", cl)
+        
+        synth_dataset = load_dataset("imagefolder", data_dir=f"{dataset_folder}{cl_filename}")["train"]
+        print("synth_dataset", synth_dataset.shape)
+        all_windows_reconstructed = []
+        for i, image in enumerate(synth_dataset):
+            img = np.array(image["image"])
+            data_axis = []
+            for axis in range(img.shape[2]):  # 0 >> x-accelerometer; 1 >> y-accelerometer; 2 >> z-accelerometer;
+            
+                # #------------------------------------------------------------------
+                # # STEP 2: Reconstruction of time-series from RP- generate graph with edges
+                # #------------------------------------------------------------------
+                rp = img[:img.shape[0] // TEST_DIV, :img.shape[1] // TEST_DIV, axis]
+                # print("rp.shape", rp.shape)
+                weighted_adjacency_matrix = construct_weighted_graph(rp)
+                shortest_path_matrix = calculate_shortest_path_matrix(weighted_adjacency_matrix)
+                reconstructed_time_series = reconstruct_time_series(shortest_path_matrix, ep=0.0)
+                # print("reconstructed_time_series", reconstructed_time_series.shape)
+
+                # reconstructed_time_series = reconstructed_time_series[PC_idx,:,:]
+                data_axis.append(reconstructed_time_series)
+                # print("reconstructed_time_series", reconstructed_time_series.shape)
+
+            #------------------------------------------------------------------
+            # PLOT RECONSTRUCTION
+            #------------------------------------------------------------------
+            reconstructed = np.squeeze(data_axis).T#[PC_idx,:,:]
+            # print("reconstructed:", reconstructed.shape)
+            # print("reconstructed[:, 1]", reconstructed[:, 1])
+            # reconstructed *= 5
 
 
+            reconstructed_scaled = reconstructed.copy()
+            # print("reconstructed scaled:", reconstructed_scaled.shape)
 
-import argparse
+            #--- Normalizacion
+
+            # for x in range(3):
+            #   reconstructed_scaled[:, x] = np.interp(reconstructed[:, x], (reconstructed[:, x].min(), reconstructed[:, x].max()), (df_original_plot.values[:, x].min(), df_original_plot.values[:, x].max()))
+            # for x in range(img.shape[2]):
+                # min_original, max_original = df_original_plot.values[:, x].min(), df_original_plot.values[:, x].max()
+                # min_reconstructed, max_reconstructed = reconstructed[:, x].min(), reconstructed[:, x].max()
+                # reconstructed_scaled[:, x] = (reconstructed[:, x] - min_reconstructed) * (max_original - min_original) / (max_reconstructed - min_reconstructed) + min_original
+                
+            # print("reconstructed scaled:", reconstructed_scaled.shape)
+            # all_windows_reconstructed.append(reconstructed_scaled)
+            x_reconstructed.append(reconstructed_scaled)
+            y_reconstructed.append([cl])
+            # sj_reconstructed.append([sub])
+
+            df_plot = pd.DataFrame(reconstructed_scaled, columns=["x_axis", "y_axis", "z_axis"])
+            df_plot["signal"] = np.repeat("Reconstructed", df_plot.shape[0])
+            # print("reconstructed:", df_plot.head(128))
+
+
+            df_reconstruct = df_plot.copy()
+            # print("df_original_plot.shape", df_original_plot.shape)
+            # print("df_reconstruct.shape", df_reconstruct.shape)
+
+            # df_reconstruct.iloc[:, :-1] = df_reconstruct.iloc[:, :-1] * TIMES_AUGM
+            # print(df_reconstruct.shape
+            df_all_plot = df_reconstruct #pd.concat([df_original_plot, df_reconstruct])
+            # print("df_all_plot", df_all_plot.shape)
+            # print(f"{dataset_folder}visualization/{cl}/time-series-reconstruction/{sub}/")
+            # plot_reconstruct_time_series(df_reconstruct, cl, subject=sub, timestep_start_idx=window_id, saveFig=False, showPlot=True)
+            recurrence_plots.plot_reconstruct_time_series(df_all_plot, cl, dataset_folder=visualization_savepath,TIME_STEPS=TIME_STEPS, subject=i, timestep_start_idx=-1, saveFig=True, showPlot=False)
+    os.makedirs(f"{dataset_folder}numpies/synthetic/{sampling}/times-series-reconstruction/", exist_ok=True)
+    np.save(f"{dataset_folder}numpies/synthetic/{sampling}/times-series-reconstruction/X_reconstructed.npy" , np.array(x_reconstructed))
+    np.save(f"{dataset_folder}numpies/synthetic/{sampling}/times-series-reconstruction/y_reconstructed.npy" , np.array(y_reconstructed))
+
+
 def main():
     '''Examples of runs:
-    $ ./tgen/reconstruct_timeseries.py
+    - reconstruct only the original time-series
+    $ nohup ./tgen/reconstruct_timeseries.py --reconstruct-original-data --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/ > reconstruction-original-data.log & 
 
+    -reconstruct only from the synthetic images its time-series (LOSO strategy)
+    $ nohup ./tgen/reconstruct_timeseries.py --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/results/ --sampling loso > reconstruction-synthetic-loso.log & 
+
+    -reconstruct only from the synthetic images its time-series (LOTO strategy)
+    $ nohup ./tgen/reconstruct_timeseries.py --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/results/ --sampling loto  > reconstruction-synthetic-loto.log & 
 
     '''
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     p.add_argument('--data-folder', type=str, default="/home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/", help='the data folder path')
     p.add_argument('--time-steps', type=int, default=129)
+    p.add_argument('--n-folds', type=int, default=3)
+    p.add_argument('--sampling', type=str, default="loso")
+    p.add_argument('--reconstruct-original-data', action="store_true", help='reconstruct only original data; if not, from synthetic images reconstruct its time-series')
 
 
     args = p.parse_args()
     data_folder = args.data_folder
     time_steps = args.time_steps
-    reconstruct(data_folder, time_steps)
+    if args.reconstruct_original_data:
+        reconstruct_original_data(data_folder, time_steps)
+    else:
+        for fold in range(args.n_folds):
+            reconstruct_from_synthetic_images(f"{args.data_folder}{args.sampling}/fold_{fold}/", f"{args.data_folder}{args.sampling}/visualization_fold_{fold}/", args.sampling, args.time_steps)
 
 
 if __name__ == '__main__':

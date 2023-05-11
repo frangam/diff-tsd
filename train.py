@@ -30,7 +30,8 @@ def main():
 
 
     No supported multi-gpu with accelerator now
-    only one gpu un $ accelerate config, then:
+    only one gpu 
+    $ accelerate config, then:
     $ nohup accelerate launch ./train.py --max-epochs 2 > train.log &
 
 

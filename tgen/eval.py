@@ -295,11 +295,13 @@ def fit(dir_path, name, kfold, model, train_ds, val_ds, epochs, batch_size, devi
   os.makedirs(p, exist_ok=True)
 
   #without specifying .hdf5 for using .tf by default (if we are using Customs models)
-  model_checkpoint = keras.callbacks.ModelCheckpoint(p, save_best_only=True, monitor='val_loss', mode='min', verbose=1)
+  monitor = 'val_accuracy' if val_ds is not None else 'loss'
+  model_checkpoint = keras.callbacks.ModelCheckpoint(p, save_best_only=True, monitor=monitor, mode='max', verbose=1)
   # reduce_lr_loss = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1, epsilon=1e-4, mode='min')
 
 
-  # early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_sparse_categorical_accuracy", patience=patience)
+  # early_stopping = keras.callbacks.EarlyStopping(monitor=monitor, patience=patience)
+
   # history = model.fit(train_ds, 
   #   # steps_per_epoch=train_ds.samples // batch_size ,  #  images / batch_size = steps
   #   epochs=epochs, 
@@ -345,7 +347,8 @@ def fit(dir_path, name, kfold, model, train_ds, val_ds, epochs, batch_size, devi
     history = model.fit(train_ds,
                           steps_per_epoch=STEP_SIZE_TRAIN,
                           callbacks=callback_list,
-                          epochs=epochs
+                          epochs=epochs,
+                          verbose=1
     )
   else:
     STEP_SIZE_VALID=val_ds.n//val_ds.batch_size
@@ -355,7 +358,8 @@ def fit(dir_path, name, kfold, model, train_ds, val_ds, epochs, batch_size, devi
                           validation_data=val_ds,
                           validation_steps=STEP_SIZE_VALID,
                           callbacks=callback_list,
-                          epochs=epochs
+                          epochs=epochs,
+                          verbose=1
       )
 
 

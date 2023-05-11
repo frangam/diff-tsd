@@ -71,15 +71,20 @@ def main():
     Run after you create the recurrence plots with:
     $ ./generate_recurrence_plots.py
     or another:
-    $ ./generate_recurrence_plots.py --data-nam WISDM --n-folds 3 --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/
+    $ ./generate_recurrence_plots.py --data-name WISDM --n-folds 3 --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/
 
     Then...
     
     $ chmod +x ./tgen/upload_recurrence_plots_to_huggingface.py 
 
     Examples of runs:
-    $ nohup ./tgen/upload_recurrence_plots_to_huggingface.py --huggingface-token YOUR_TOKEN > upload_rp.log &
-    $ nohup ./tgen/upload_recurrence_plots_to_huggingface.py --huggingface-token YOUR_TOKEN --data-name WISDM --n-folds 3 --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/ > upload_rp.log &
+    $ nohup ./tgen/upload_recurrence_plots_to_huggingface.py --sampling loso --huggingface-token YOUR_TOKEN > upload_rp.log &
+    $ nohup ./tgen/upload_recurrence_plots_to_huggingface.py --sampling loso --huggingface-token YOUR_TOKEN --data-name WISDM --n-folds 3 --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/ > upload_rp.log &
+
+    $ nohup ./tgen/upload_recurrence_plots_to_huggingface.py --sampling loso --huggingface-token YOUR_TOKEN > upload_rp_loso.log &
+
+
+    $ nohup ./tgen/upload_recurrence_plots_to_huggingface.py --sampling loto --huggingface-token YOUR_TOKEN > upload_rp_loto.log &
 
 
     '''

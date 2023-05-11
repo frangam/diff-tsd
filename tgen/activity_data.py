@@ -139,7 +139,7 @@ from scipy import stats
 import os    
 import shutil
 
-def create_dataset(savepath, data_type, X, y, sj_id, time_steps=1, step=1, verbose=False, sampling="loso"):
+def create_dataset(savepath, data_type, X, y, sj_id, time_steps=1, step=1, verbose=False):
     Xs_all, ys_all, sjs_all = [], [], []
     Xs, ys, sjs = [], [], []
     l_prev = stats.mode(y.iloc[: time_steps])[0][0]
@@ -149,7 +149,7 @@ def create_dataset(savepath, data_type, X, y, sj_id, time_steps=1, step=1, verbo
     sj_prev = stats.mode(sj_id.iloc[: time_steps])[0][0]
 
     #delete first all previous data
-    shutil.rmtree(f"{savepath}{data_type}", ignore_errors=True)
+    shutil.rmtree(f"{savepath}{data_type}/windowed/", ignore_errors=True)
 
     for i in range(0, len(X) - time_steps, step):
       v = X.iloc[i:(i + time_steps)].values #a window
@@ -187,9 +187,9 @@ def create_dataset(savepath, data_type, X, y, sj_id, time_steps=1, step=1, verbo
             # np.save(f"{savepath}{data_type}/RP/{l_prev}/x.npy", np.array(Xs))
             
 
-            if os.path.exists(f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/x.npy"):
-              print("Exists:", f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/x.npy. Loading existing file and appending the new data")
-              aux = np.load(f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/x.npy")
+            if os.path.exists(f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/x.npy"):
+              print("Exists:", f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/x.npy. Loading existing file and appending the new data")
+              aux = np.load(f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/x.npy")
               for a in aux:
                 Xs.append(a)
             #-------------------------------------------------------------------------
@@ -207,8 +207,8 @@ def create_dataset(savepath, data_type, X, y, sj_id, time_steps=1, step=1, verbo
             #-------------------------------------------------------------------------
 
               
-            os.makedirs(f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/", exist_ok=True)
-            np.save(f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/x.npy", np.array(Xs))
+            os.makedirs(f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/", exist_ok=True)
+            np.save(f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/x.npy", np.array(Xs))
 
             #np.save(f"{savepath}{data_type}/windowed/{l_prev}/{sj}/y.npy",  np.array(ys).reshape(-1, 1))
             #np.save(f"{savepath}{data_type}/windowed/{l_prev}/{sj}/sj.npy", np.array(sjs).reshape(-1, 1))
@@ -228,25 +228,25 @@ def create_dataset(savepath, data_type, X, y, sj_id, time_steps=1, step=1, verbo
     # print("sj:", sj, "seg:",i, "/", len(X) - time_steps, "label:", l)
     
     print(f"LAST -- >Saving x data [subject {sj_prev}], label: {l_prev}, size: {np.array(Xs).shape}")
-    os.makedirs(f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/", exist_ok=True)
+    os.makedirs(f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/", exist_ok=True)
 
-    if os.path.exists(f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/x.npy"):
-      print("Exists:", f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/x.npy")
-      aux = np.load(f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/x.npy")
+    if os.path.exists(f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/x.npy"):
+      print("Exists:", f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/x.npy")
+      aux = np.load(f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/x.npy")
       for a in aux:
         Xs.append(a)
             
-    np.save(f"{savepath}{data_type}/sampling_{sampling}/windowed/{l_prev}/{sj_prev}/x.npy", np.array(Xs))
+    np.save(f"{savepath}{data_type}/windowed/{l_prev}/{sj_prev}/x.npy", np.array(Xs))
 
-    np.save(f"{savepath}{data_type}/sampling_{sampling}/windowed/X_{data_type}.npy", np.array(Xs_all))
-    np.save(f"{savepath}{data_type}/sampling_{sampling}/windowed/y_{data_type}.npy", np.array(ys_all).reshape(-1, 1))
-    np.save(f"{savepath}{data_type}/sampling_{sampling}/windowed/sj_{data_type}.npy", np.array(sjs_all).reshape(-1, 1))
+    np.save(f"{savepath}{data_type}/windowed/X_{data_type}.npy", np.array(Xs_all))
+    np.save(f"{savepath}{data_type}/windowed/y_{data_type}.npy", np.array(ys_all).reshape(-1, 1))
+    np.save(f"{savepath}{data_type}/windowed/sj_{data_type}.npy", np.array(sjs_all).reshape(-1, 1))
 
     
     return np.array(Xs_all), np.array(ys_all).reshape(-1, 1), np.array(sjs_all).reshape(-1, 1)
 
 
-def create_all_numpy_datasets(DATASET_NAME="WISDM", dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/", COL_SELECTED_IDXS=list(range(3, 3+3)), sampling="loso"):
+def create_all_numpy_datasets(DATASET_NAME="WISDM", dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/", COL_SELECTED_IDXS=list(range(3, 3+3))):
     TIME_STEPS, STEP = get_time_setup(DATASET_NAME)
     df = preprocess_activity_data_sets(DATASET_NAME, dataset_folder, column_names = ['user_id', 'activity', 'timestamp', 'x_axis', 'y_axis', 'z_axis'])
     print("Classes preprocessed:", np.unique(df.activity))
@@ -259,13 +259,12 @@ def create_all_numpy_datasets(DATASET_NAME="WISDM", dataset_folder="/home/fmgarm
         df.user_id ,
         TIME_STEPS, 
         STEP,
-        verbose=False,
-        sampling=sampling
+        verbose=False
     )
     return X_train, y_train, sj_train
 
-def load_numpy_datasets(DATASET_NAME="WISDM", dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/", USE_RECONSTRUCTED_DATA = False, sampling="loso"): # if use signal recontruction data or not (original data)
-    load_path = f"{dataset_folder}numpies/train/sampling_{sampling}/"
+def load_numpy_datasets(DATASET_NAME="WISDM", dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/", USE_RECONSTRUCTED_DATA = False): # if use signal recontruction data or not (original data)
+    load_path = f"{dataset_folder}numpies/train/"
     if USE_RECONSTRUCTED_DATA:
         load_path += "times-series-reconstruction/"
         X_train = np.load(f"{load_path}X_reconstructed.npy")

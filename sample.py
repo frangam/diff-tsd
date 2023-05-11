@@ -11,15 +11,15 @@ import k_diffusion as K
 
 def main():
     '''Examples of runs:
+    $  nohup ./sample.py --config configs/config_wisdm_128x128_loto.json -n 2000  > sample-loto.log &
 
-    $  nohup ./sample.py > sample.log &
+    $  nohup ./sample.py --config configs/config_wisdm_128x128_loso.json -n 2000  > sample-loso.log &
     '''
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     p.add_argument('--n-folds', type=int, default=3, help='the number of folds')
     p.add_argument('--n-classes', type=int, default=5, help='the number of classes')
 
-    p.add_argument('--sampling', type=str, default="loso", help='the sampling method')
     p.add_argument('--batch-size', type=int, default=16,
                    help='the batch size')
     p.add_argument('--config', type=str, default="configs/config_wisdm_128x128_loso.json",
@@ -33,9 +33,11 @@ def main():
                    help='the number of denoising steps')
     args = p.parse_args()
 
-    sampling_method = args.sampling
     config = K.config.load_config(open(args.config))
     model_config = config['model']
+    dataset_config = config['dataset']
+    sampling_method = dataset_config["sampling"]
+
     # TODO: allow non-square input sizes
     assert len(model_config['input_size']) == 2 and model_config['input_size'][0] == model_config['input_size'][1]
     size = model_config['input_size']

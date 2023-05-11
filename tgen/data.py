@@ -1,9 +1,9 @@
 #!/home/fmgarmor/miot_env/bin/python3
 
 '''
-Generation of images for train/validation/test and assess the quality of synthetic.
+Generation of images for train/test and assess the quality of synthetic.
 Synthetic images are the train set.
-Validation set are real data, which are used to validate the model in the training phase
+TEST set are real data, which are used to validate the model in the training phase
 Test set are real data, which is used to test the trained model
 '''
 
@@ -27,11 +27,16 @@ import k_diffusion as K
 
 def main():
   '''Examples of runs:
+  ** LOSO APPROACH
   $  nohup ./tgen/data.py --config configs/config_wisdm_128x128_loso.json --prefix exp-classes-all-classes --class-names 0,1,2,3,4 --splits 0,1,2 > data_splits.log &
-
-
+  
   - only 2 clases (1, 3) and only the split 3 (real train images)
   $  nohup ./tgen/data.py --prefix exp-classes-1-3 --class-names 1,3 --splits 2 > data_splits.log &
+
+
+  ** LOTO approach
+  $  nohup ./tgen/data.py --config configs/config_wisdm_128x128_loto.json --prefix exp-classes-all-classes --class-names 0,1,2,3,4 --splits 0,1,2 > data_splits-loto.log &
+
   '''
   p = argparse.ArgumentParser(description=__doc__,
                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)

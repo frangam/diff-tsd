@@ -6,9 +6,11 @@ import tgen.activity_data as act
 import tgen.recurrence_plots as rec
 def main():
     '''Examples of runs:
-    $ ./generate_recurrence_plots.py
-    $ nohup ./generate_recurrence_plots.py --data-name WISDM --n-folds 3 --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/ --sampling loso --create-numpies > recurrence_plots_loso.log &
-
+    - load LOSO numpies
+    $ nohup ./generate_recurrence_plots.py --data-name WISDM --n-folds 3 --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/ --sampling loso  > recurrence_plots_loso.log &
+    
+    - Create numpies included
+    $ nohup ./generate_recurrence_plots.py --create-numpies --data-name WISDM --n-folds 3 --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/ --sampling loso > recurrence_plots_loto.log &
     $ nohup ./generate_recurrence_plots.py --create-numpies --data-name WISDM --n-folds 3 --data-folder /home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/ --sampling loto > recurrence_plots_loto.log &
     '''
     p = argparse.ArgumentParser(description=__doc__,
@@ -26,13 +28,14 @@ def main():
     data_name = args.data_name
     FOLDS_N = args.n_folds
     TIME_STEPS, STEPS = act.get_time_setup(DATASET_NAME=data_name)
+    print("TIME_STEPS", TIME_STEPS, "STEPS", STEPS)
     X_train, y_train, sj_train = None, None, None
     if not create_numpies:
         print("Loading numpies...")
-        X_train, y_train, sj_train = act.load_numpy_datasets(data_name, data_folder, USE_RECONSTRUCTED_DATA=False, sampling=args.sampling)
+        X_train, y_train, sj_train = act.load_numpy_datasets(data_name, data_folder, USE_RECONSTRUCTED_DATA=False)
     else:
         print("Creating numpies...")
-        X_train, y_train, sj_train = act.create_all_numpy_datasets(data_name, data_folder, COL_SELECTED_IDXS=list(range(3, 3+3)), sampling=args.sampling)
+        X_train, y_train, sj_train = act.create_all_numpy_datasets(data_name, data_folder, COL_SELECTED_IDXS=list(range(3, 3+3)))
         y_train = to_categorical(y_train, dtype='uint8') 
     print("X_train", X_train.shape, "y_train", y_train.shape, "sj_train", sj_train.shape)
     

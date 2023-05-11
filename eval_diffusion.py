@@ -21,14 +21,21 @@ from tgen import eval
 
 def main():
     '''Examples of runs:
+
+    ** LOSO approach
     - train with synthetic images
     $  nohup ./eval_diffusion.py --model-name resnet50 --prefix exp-classes-all-classes --epochs 100 --synth-train --config configs/config_wisdm_128x128_loso.json > results/evaluation_synthetic_quality/loso/exp-classes-all-classes/eval.log &
-
     $  nohup ./eval_diffusion.py --model-name resnet50 --prefix exp-classes-3-4 --epochs 100 --synth-train > results/evaluation_synthetic_quality/exp-classes-3-4/eval.log &
     
     - train with real images
-    $  nohup ./eval_diffusion.py --model-name resnet50 --prefix exp-classes-3-4 --epochs 100 > results/evaluation_synthetic_quality/exp-classes-3-4/eval.log &
+    $ nohup ./eval_diffusion.py --model-name resnet34 --prefix exp-classes-all-classes --epochs 30 > results/evaluation_synthetic_quality/eval-real-data.log &
+    $ nohup ./eval_diffusion.py --model-name resnet50 --prefix exp-classes-3-4 --epochs 100 > results/evaluation_synthetic_quality/exp-classes-3-4/eval.log &
 
+    ** LOTO approach
+    - train with synthetic images
+    $  nohup ./eval_diffusion.py --model-name vgg16 --prefix exp-classes-all-classes --epochs 30 --synth-train --config configs/config_wisdm_128x128_loto.json > results/evaluation_synthetic_quality/loso/exp-classes-all-classes/eval-vgg16.log &
+    - train with real images
+    $ nohup ./eval_diffusion.py --model-name resnet34 --prefix exp-classes-all-classes --epochs 30 > results/evaluation_synthetic_quality/eval-real-data.log &
 
     '''
     p = argparse.ArgumentParser(description=__doc__,
@@ -201,24 +208,26 @@ def main():
         histories.append(history)
 
         #plot history
-        eval.plot_train_eval(history, f"{p}% Synthetic Images") 
+        # eval.plot_train_eval(history, f"{p}% Synthetic Images") 
 
         # LOAD BEST MODEL to evaluate the performance of the model
-        # model.load_weights(f"{dir_path}{model_name}/model_{fold}")
+        model.load_weights(f"{dir_path}fold_{fold}/{model_name}/model_{model_name}")
         
         # results = model.evaluate(valid_data_generator)
-        results = model.evaluate(valid_data_generator, steps=STEP_SIZE_TEST)
+        # results = model.evaluate(valid_data_generator, steps=STEP_SIZE_TEST)
+        results = model.evaluate(test_data_generator, steps=STEP_SIZE_TEST, verbose=0)
         results = dict(zip(model.metrics_names,results))
         print("Results - validation:", results)
         
         VALIDATION_ACCURACY.append(results['accuracy'])
         VALIDATION_LOSS.append(results['loss'])
 
-
+        keras.backend.clear_session()
+        
         #confusion matrix of current fold
         # y_pred = model.predict(test_data_generator)
         test_data_generator.reset() #You need to reset the test_generator before whenever you call the predict_generator. This is important, if you forget to reset the test_generator you will get outputs in a weird order.
-        y_pred=model.predict(test_data_generator, steps=STEP_SIZE_TEST, verbose=1)
+        y_pred=model.predict(test_data_generator, steps=STEP_SIZE_TEST, verbose=0)
         # print("y_pred:", y_pred)
         predicted_class_indices = np.argmax(y_pred,axis=1)
         # print("predicted_class_indices:", predicted_class_indices)

@@ -11,6 +11,8 @@ import time
 import seaborn as sns
 from sklearn.model_selection import StratifiedGroupKFold, GroupKFold
 
+from PIL import Image
+
 def vector_magnitude(vector):
     x, y = vector  # unpack the vector into its two components
     magnitude = math.sqrt(x**2 + y**2)  # calculate the magnitude using the formula
@@ -232,24 +234,32 @@ def SaveRP_XYZ(x, sj, item_idx, action, normalized, path, saveImage=True, TIME_S
     _r = RP(x,'x', TIME_STEPS)
     _g = RP(x,'y', TIME_STEPS)
     _b = RP(x,'z', TIME_STEPS)
-    plt.close('all')
-    plt.axis('off')
-    plt.margins(0,0)
-    plt.gca().xaxis.set_major_locator(plt.NullLocator())
-    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    # plt.close('all')
+    # plt.axis('off')
+    # plt.margins(0,0)
+    # plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    # plt.gca().yaxis.set_major_locator(plt.NullLocator())
     if normalized:
         newImage = RGBfromRPMatrix_of_XYZ(NormalizeMatrix(_r), NormalizeMatrix(_g), NormalizeMatrix(_b))
         #newImage = RGBfromRPMatrix_of_XYZ(_r, _g, _b)
-        plt.imshow(newImage)
+
+        newImage = Image.fromarray((newImage * 255).astype(np.uint8))
+
+        # plt.imshow(newImage)
         if saveImage:
-          plt.savefig(f"{path}{sj}{action}{item_idx}_rp.png",bbox_inches='tight',pad_inches = 0)
-        plt.close('all')
+          # plt.savefig(f"{path}{sj}{action}{item_idx}_rp.png",bbox_inches='tight',pad_inches = 0, dpi='figure')
+          newImage.save(f"{path}{sj}{action}{item_idx}_rp.png")
+        # plt.close('all')
     else:
         newImage = RGBfromRPMatrix_of_XYZ(_r, _g, _b)
-        plt.imshow(newImage)
+        newImage = Image.fromarray((newImage * 255).astype(np.uint8))
+
+        # plt.imshow(newImage)
         if saveImage:
-          plt.savefig(f"{path}{sj}{action}{item_idx}_rp.png",bbox_inches='tight',pad_inches = 0)
-        plt.close('all')
+          # plt.savefig(f"{path}{sj}{action}{item_idx}_rp.png",bbox_inches='tight',pad_inches = 0, dpi='figure')
+          newImage.save(f"{path}{sj}{action}{item_idx}_rp.png")
+
+        # plt.close('all')
     return newImage
 def SavevarRP_XYZ(x, sj, item_idx, action=None, normalized=True, path=None, saveImage=True, TIME_STEPS=129):
   if not all([(x==0).all()]):
@@ -261,24 +271,33 @@ def SavevarRP_XYZ(x, sj, item_idx, action=None, normalized=True, path=None, save
     #print("Y", _g)
     #print("Z", _b)
 
-    plt.close('all')
-    plt.axis('off')
-    plt.margins(0,0)
-    plt.gca().xaxis.set_major_locator(plt.NullLocator())
-    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    # plt.close('all')
+    # plt.figure(figsize=(1,1))
+    # plt.axis('off')
+    # plt.margins(0,0)
+    # plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    # plt.gca().yaxis.set_major_locator(plt.NullLocator())
+
+    print("fig size: width=", plt.figure().get_figwidth(), "height=", plt.figure().get_figheight())
+
     if normalized:
         newImage = RGBfromRPMatrix_of_XYZ(NormalizeMatrix(_r), NormalizeMatrix(_g), NormalizeMatrix(_b))
         #newImage = RGBfromRPMatrix_of_XYZ(_r, _g, _b)
-        plt.imshow(newImage)
+        # print(newImage.shape)
+        newImage = Image.fromarray((newImage * 255).astype(np.uint8))
+        # plt.imshow(newImage)
         if saveImage:
-          plt.savefig(f"{path}{sj}{action}{item_idx}.png",bbox_inches='tight',pad_inches = 0)
-        plt.close('all')
+          # plt.savefig(f"{path}{sj}{action}{item_idx}.png",bbox_inches='tight',pad_inches = 0, dpi='figure')
+          newImage.save(f"{path}{sj}{action}{item_idx}.png")
+        # plt.close('all')
     else:
         newImage = RGBfromRPMatrix_of_XYZ(_r, _g, _b)
-        plt.imshow(newImage)
+        newImage = Image.fromarray((newImage * 255).astype(np.uint8))
+        # plt.imshow(newImage)
         if saveImage:
-          plt.savefig(f"{path}{sj}{action}{item_idx}.png",bbox_inches='tight',pad_inches = 0)
-        plt.close('all')
+          # plt.savefig(f"{path}{sj}{action}{item_idx}.png",bbox_inches='tight',pad_inches = 0, dpi='figure') #dpi='figure' for preserve the correct pixel size (TIMESTEPS x TIMESTEPS)
+          newImage.save(f"{path}{sj}{action}{item_idx}.png")
+        # plt.close('all')
     return newImage
   else:
     return None
@@ -291,50 +310,63 @@ def SavevarRP_fran(x, axis, sj=0, item_idx=0, action=None, normalized=True, path
     # _g = varRP(x,'y')
     # _b = varRP(x,'z')
     plt.close('all')
+
     plt.axis('off')
     plt.margins(0,0)
     plt.gca().xaxis.set_major_locator(plt.NullLocator())
     plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    print("fig size: width=", plt.figure().get_figwidth(), "height=", plt.figure().get_figheight())
     if normalized:
         newImage = NormalizeMatrix(_r) #RGBfromRPMatrix_of_single_axis(NormalizeMatrix(_r))
+        newImage = Image.fromarray((newImage * 255).astype(np.uint8))
+
         #newImage = RGBfromRPMatrix_of_XYZ(_r, _g, _b)
-        plt.imshow(newImage, cmap="viridis")
+        # plt.imshow(newImage, cmap="viridis")
         if saveImage:
-          plt.savefig(f"{path}{sj}{action}_{axis}_{item_idx}.png",bbox_inches='tight',pad_inches = 0)
-        plt.close('all')
+          newImage.save(f"{path}{sj}{action}_{axis}_{item_idx}.png")
+          # plt.savefig(f"{path}{sj}{action}_{axis}_{item_idx}.png",bbox_inches='tight',pad_inches = 0, dpi='figure')
+        # plt.close('all')
     else:
         newImage = RGBfromRPMatrix_of_single_axis(_r)
-        plt.imshow(newImage, cmap="viridis")
+        newImage = Image.fromarray((newImage * 255).astype(np.uint8))
+
+        # plt.imshow(newImage, cmap="viridis")
         if saveImage:
-          plt.savefig(f"{path}{sj}{action}_{axis}_{item_idx}.png",bbox_inches='tight',pad_inches = 0)
-        plt.close('all')
+          newImage.save(f"{path}{sj}{action}_{axis}_{item_idx}.png")
+          # plt.savefig(f"{path}{sj}{action}_{axis}_{item_idx}.png",bbox_inches='tight',pad_inches = 0, dpi='figure')
+        # plt.close('all')
     return newImage
 def SaveRP_fran(x, axis, sj=0, item_idx=0, action=None, normalized=True, path=None, saveImage=True, th=None, TIME_STEPS=129):
     _r = RP_axis(x, axis, th, TIME_STEPS) 
     _g = RP_axis(x, axis, th, TIME_STEPS) 
     _b = RP_axis(x, axis, th, TIME_STEPS) 
     
-    plt.close('all')
-    plt.axis('off')
-    plt.margins(0,0)
-    plt.gca().xaxis.set_major_locator(plt.NullLocator())
-    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    # plt.close('all')
+    # plt.axis('off')
+    # plt.margins(0,0)
+    # plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    # plt.gca().yaxis.set_major_locator(plt.NullLocator())
     
     if normalized:
         # newImage = NormalizeMatrix(_r) #RGBfromRPMatrix_of_single_axis(NormalizeMatrix(_r))
         newImage = RGBfromRPMatrix_of_XYZ(_r, _g, _b)
-        plt.imshow(newImage, cmap="viridis")
+        newImage = Image.fromarray((newImage * 255).astype(np.uint8))
+
+        # plt.imshow(newImage, cmap="viridis")
         if saveImage:
-          plt.savefig(f"{path}{sj}{action}_{axis}_{item_idx}.png",bbox_inches='tight',pad_inches = 0)
-        plt.close('all')
+          newImage.save(f"{path}{sj}{action}_{axis}_{item_idx}.png")
+          # plt.savefig(f"{path}{sj}{action}_{axis}_{item_idx}.png",bbox_inches='tight',pad_inches = 0, dpi='figure')
+        # plt.close('all')
     else:
         # newImage = RGBfromRPMatrix_of_single_axis(_r)
         newImage = RGBfromRPMatrix_of_XYZ(_r, _g, _b)
+        newImage = Image.fromarray((newImage * 255).astype(np.uint8))
 
-        plt.imshow(newImage, cmap="viridis")
+        # plt.imshow(newImage, cmap="viridis")
         if saveImage:
-          plt.savefig(f"{path}{sj}{action}_{axis}_{item_idx}.png",bbox_inches='tight',pad_inches = 0)
-        plt.close('all')
+          newImage.save(f"{path}{sj}{action}_{axis}_{item_idx}.png")
+          # plt.savefig(f"{path}{sj}{action}_{axis}_{item_idx}.png",bbox_inches='tight',pad_inches = 0, dpi='figure')
+        # plt.close('all')
     return newImage
 
 # def recover_time_serie_from_varRP(varRP):
@@ -428,6 +460,7 @@ def generate_and_save_recurrence_plot(fold, dataset_folder, training_data, y_dat
       w_y = y_data[i]
       w_y_no_cat = np.argmax(w_y)
       print("w_y", w_y, "w_y_no_cat", w_y_no_cat)
+      print("w", w.shape)
 
       # Update Progress Bar after a while
       time.sleep(0.01)
@@ -448,14 +481,16 @@ def generate_and_save_recurrence_plot(fold, dataset_folder, training_data, y_dat
         img = SavevarRP_XYZ(w, sj, subject_samples, "x", normalized = 1, path=f"{dataset_folder}plots/recurrence_plot/sampling_{sampling}/{data_type}/{w_y_no_cat}/", TIME_STEPS=TIME_STEPS)
       else:
         img = SavevarRP_XYZ(w, sj, subject_samples, "x", normalized = 1, path=f"{dataset_folder}plots/recurrence_plot/sampling_{sampling}/{FOLDS_N}-fold/fold-{fold}/{data_type}/{w_y_no_cat}/", TIME_STEPS=TIME_STEPS)
-      # print("image shape:", img.shape)
+      print("w image (RP) shape:", np.array(img).shape)
+      
       if single_axis and img is not None:
         #also, save each single data column values
         for col in range(w.shape[1]):
           if fold < 0:
-            SavevarRP_fran(w, sj, subject_samples, "x", normalized = 1, path=f"{dataset_folder}plots/recurrence_plot/sampling_{sampling}/{data_type}/{w_y_no_cat}/", TIME_STEPS=TIME_STEPS)
+            img = SavevarRP_fran(w, sj, subject_samples, "x", normalized = 1, path=f"{dataset_folder}plots/recurrence_plot/sampling_{sampling}/{data_type}/{w_y_no_cat}/", TIME_STEPS=TIME_STEPS)
           else:
-            SavevarRP_fran(w, col, sj, subject_samples, "x", normalized = 1, path=f"{dataset_folder}plots/single_axis/sampling_{sampling}/{FOLDS_N}-fold/fold-{fold}/{data_type}/{w_y_no_cat}/", TIME_STEPS=TIME_STEPS)
+            img = SavevarRP_fran(w, col, sj, subject_samples, "x", normalized = 1, path=f"{dataset_folder}plots/single_axis/sampling_{sampling}/{FOLDS_N}-fold/fold-{fold}/{data_type}/{w_y_no_cat}/", TIME_STEPS=TIME_STEPS)
+          print("w single axis (RP) shape:", img.shape)
       subject_samples += 1
       
      
