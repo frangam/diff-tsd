@@ -2,7 +2,7 @@
 Also, you can run the script with [nohup](https://en.wikipedia.org/wiki/Nohup) which ignores the hangup signal. This means that you can close the terminal without stopping the execution. Also, don’t forget to add & so the script runs in the background:
 
 ```sh
-$ nohup accelerate launch train.py --config CONFIG_FILE --name RUN_NAME --wandb-entity frangam --wandb-project diffusion-ts-rp --current-fold 0 --class-label 0 --max-epochs 2000 > results/fold_0.log &
+$ nohup accelerate launch train.py --config CONFIG_FILE  > your.log &
 ```
 
 In addition, to close remote terminal safely, you have to run the exit commant, and do not close manually the terminal:
@@ -67,6 +67,7 @@ $ accelerate config
 on all nodes, then running:
 
 For LOTO approach:
+
 ```sh
 $ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loto.json --epochs 10000 --batch-size 16 > train_loto.log &
 ```
@@ -81,9 +82,11 @@ on all nodes.
 # Sampling
 
 Generate "n" samples (in this case, 2.000).
+
 ```sh
  $  nohup ./sample.py --config configs/config_wisdm_128x128_loto.json -n 2000  > sample-loto.log &
  ```
+ 
 ```sh
  $  nohup ./sample.py --config configs/config_wisdm_128x128_loso.json -n 2000  > sample-loso.log &
  ```
