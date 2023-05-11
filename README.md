@@ -84,12 +84,12 @@ on all nodes.
 Generate "n" samples (in this case, 2.000).
 
 ```sh
- $  nohup ./sample.py --config configs/config_wisdm_128x128_loto.json -n 2000  > sample-loto.log &
- ```
- 
+$  nohup ./sample.py --config configs/config_wisdm_128x128_loto.json -n 2000  > sample-loto.log &
+```
+
 ```sh
- $  nohup ./sample.py --config configs/config_wisdm_128x128_loso.json -n 2000  > sample-loso.log &
- ```
+$  nohup ./sample.py --config configs/config_wisdm_128x128_loso.json -n 2000  > sample-loso.log &
+```
 
 # Prepare to evaluate the shyntetic samples generated
 Create splits of images for train/test and assess the quality of synthetic images generated before.
@@ -101,7 +101,7 @@ Create splits of images for train/test and assess the quality of synthetic image
 
 ```sh
 $ nohup ./tgen/data.py --config configs/config_wisdm_128x128_loto.json --prefix exp-classes-all-classes --class-names 0,1,2,3,4 --splits 0,1,2 > data_splits-loto.log &
- ```
+```
 
 # Evaluation 
 ## Evaluation of synthetic recurrence plots sampled
