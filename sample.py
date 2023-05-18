@@ -83,7 +83,7 @@ def main():
                     return x_0
                 x_0 = K.evaluation.compute_features(accelerator, sample_fn, lambda x: x, args.n, args.batch_size)
                 if accelerator.is_main_process:
-                    path = f'{args.result_folder}{args.sampling}/fold_{fold}/class_{cl}/sample/'
+                    path = f'{args.result_folder}{sampling_method}/fold_{fold}/class_{cl}/sample/'
                     os.makedirs(path, exist_ok=True)
                     for i, out in enumerate(x_0):
                         filename = f"{path}sample_{i:05}.png"

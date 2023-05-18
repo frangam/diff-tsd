@@ -81,5 +81,5 @@ data
 downloads/*
 dow.py
 dow-1m.py
-
+wandb*
 libdevice.10.bc

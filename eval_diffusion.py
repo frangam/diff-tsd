@@ -99,7 +99,9 @@ def main():
     models, histories = [], []
     acc_per_class = {}
 
-    dir_path = f"results/evaluation_synthetic_quality/{sampling_method}/{args.prefix}/result_models/" 
+    dir_path = f"results/evaluation_synthetic_quality/{sampling_method}/{args.prefix}/result_models_trained_on_real_images/" 
+    if use_synth_images_for_train:
+        dir_path = f"results/evaluation_synthetic_quality/{sampling_method}/{args.prefix}/result_models_trained_on_synthetic_images/" 
     os.makedirs(dir_path, exist_ok=True)
     # release GPU Memory
     # K.clear_session()
@@ -294,3 +296,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+

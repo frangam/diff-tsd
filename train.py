@@ -24,9 +24,9 @@ import tgen.utils as tu
 def main():
     '''Examples of runs:
 
-    $ nohup ./train.py --config configs/config_wisdm_128x128_loso.json > train_loso.log &
+    $ nohup ./train.py --config configs/config_wisdm_128x128_loso.json --max-epochs 1000 > train_loso.log &
     
-    $ nohup ./train.py --config configs/config_wisdm_128x128_loto.json > train_loto.log &
+    $ nohup ./train.py --config configs/config_wisdm_128x128_loto.json --max-epochs 1000 > train_loto.log &
 
 
     No supported multi-gpu with accelerator now
@@ -54,7 +54,7 @@ def main():
                    help='save a demo grid every this many steps')
     p.add_argument('--evaluate-every', type=int, default=5000,
                    help='save a demo grid every this many steps')
-    p.add_argument('--evaluate-n', type=int, default=2000,
+    p.add_argument('--evaluate-n', type=int, default=1000,
                    help='the number of samples to draw to evaluate')
     p.add_argument('--gns', action='store_true',
                    help='measure the gradient noise scale (DDP only)')
@@ -90,6 +90,51 @@ def main():
     p.add_argument('--wandb-save-model', action='store_true',
                    help='save model to wandb')
     args = p.parse_args()
+
+    #-- TODO delete this dict after experiments...
+    run_ids={
+        "loto-fold-2-cl-4-128x128": "run-20230514_201508-whsjamux",
+        "loto-fold-1-cl-4-128x128": "run-20230514_145053-pbfywjox",
+        "loto-fold-0-cl-4-128x128": "run-20230514_092657-xzo4miw4",
+        
+        "loto-fold-2-cl-3-128x128": "run-20230514_040556-kvcqvwso",
+        "loto-fold-1-cl-3-128x128": "run-20230513_224508-fhmdk1e3",
+        "loto-fold-0-cl-3-128x128": "run-20230513_144852-392ng5jt",
+
+        "loto-fold-2-cl-2-128x128": "run-20230513_093033-bzhn0yb8",
+        "loto-fold-1-cl-2-128x128": "run-20230513_041242-i0vnva2v",
+        "loto-fold-0-cl-2-128x128": "run-20230512_225436-6yvmn1rz",
+
+        "loto-fold-2-cl-1-128x128": "run-20230512_170152-qig09rle",
+        "loto-fold-1-cl-1-128x128": "run-20230512_102438-ywy7or5j",
+        "loto-fold-0-cl-1-128x128": "run-20230512_044828-aqpg4zw9",
+
+        "loto-fold-2-cl-0-128x128": "run-20230511_233003-s7gkpke7",
+        "loto-fold-1-cl-0-128x128": "run-20230511_170516-j1end0xv",
+        "loto-fold-0-cl-0-128x128": "run-20230511_110519-7ysc8d7a",
+
+
+        "loso-fold-2-cl-4-128x128": "run-20230508_210108-t4oczxum",
+        "loso-fold-1-cl-4-128x128": "run-20230508_153222-ue8ifi80",
+        "loso-fold-0-cl-4-128x128": "run-20230508_100621-9qymlve4",
+        
+        "loso-fold-2-cl-3-128x128": "run-20230508_043752-hkgz11uq",
+        "loso-fold-1-cl-3-128x128": "run-20230507_231618-tdne2jji",
+        "loso-fold-0-cl-3-128x128": "run-20230507_173756-fjneof0t",
+
+        "loso-fold-2-cl-2-128x128": "run-20230507_121301-yyjdoa0j",
+        "loso-fold-1-cl-2-128x128": "run-20230507_065516-zgqxcoma",
+        "loso-fold-0-cl-2-128x128": "run-20230507_013737-cvtfijfq",
+
+        "loso-fold-2-cl-1-128x128": "run-20230506_201610-wi6r8msg",
+        "loso-fold-1-cl-1-128x128": "run-20230506_150109-357kcdkq",
+        "loso-fold-0-cl-1-128x128": "run-20230506_094206-9lj172xw",
+
+        "loso-fold-2-cl-0-128x128": "run-20230506_041525-q4ksq5qg",
+        "loso-fold-1-cl-0-128x128": "run-20230505_224841-kulaz209",
+        "loso-fold-0-cl-0-128x128": "run-20230505_171823-2y7wbtbd"
+    }
+    #---
 
 
     mp.set_start_method(args.start_method)
@@ -129,13 +174,16 @@ def main():
                 model_config['mapping_out'], # mapping out
                 model_config['depths'], # depths
                 model_config['channels'], # channels
-                model_config['self_attn_depths']
+                model_config['self_attn_depths'],
+                patch_size=model_config["patch_size"]
                 ) # self attention
 
 
             inner_model_ema = deepcopy(inner_model)
             if accelerator.is_main_process:
                 print('Parameters:', K.utils.n_params(inner_model))
+            
+            state_path = Path(f'results/{sampling_method}/fold_{current_fold}/class_{class_label}/{args.name}_fold_{current_fold}_class_{class_label}_state.json')
 
             # If logging to wandb, initialize the run
             use_wandb = accelerator.is_main_process and args.wandb_project
@@ -143,7 +191,12 @@ def main():
                 log_config = vars(args)
                 log_config['config'] = config
                 log_config['parameters'] = K.utils.n_params(inner_model)
-                wandb.init(project=args.wandb_project, entity=args.wandb_entity, group=args.wandb_group, config=log_config, save_code=True, tags=[f"Fold-{current_fold}", f"Class-{class_label}", f"{model_config['input_size'][0]}x{model_config['input_size'][1]}", f"Sampling-{sampling_method}"])
+                run_id = f"{sampling_method}-fold-{current_fold}-cl-{class_label}-{size[0]}x{size[1]}"
+                run_id = run_ids[run_id].split("-")[-1] #TODO keep this line only for this experiment (because, run ids did not be generated manually the firs time !!)
+                if state_path.exists() or args.resume:
+                    wandb.init(id=run_id, resume="must", project=args.wandb_project, entity=args.wandb_entity, group=args.wandb_group, config=log_config, save_code=True, tags=[f"Fold-{current_fold}", f"Class-{class_label}", f"{model_config['input_size'][0]}x{model_config['input_size'][1]}", f"Sampling-{sampling_method}"])
+                else:
+                    wandb.init(id=run_id, project=args.wandb_project, entity=args.wandb_entity, group=args.wandb_group, config=log_config, save_code=True, tags=[f"Fold-{current_fold}", f"Class-{class_label}", f"{model_config['input_size'][0]}x{model_config['input_size'][1]}", f"Sampling-{sampling_method}"])
                 print("inited wandb")
             if opt_config['type'] == 'adamw':
                 opt = optim.AdamW(inner_model.parameters(),
@@ -242,7 +295,7 @@ def main():
             model = K.layers.Denoiser(inner_model, sigma_data=model_config["sigma_data"]).to(device) #K.config.make_denoiser_wrapper(config)(inner_model)
             model_ema = K.layers.Denoiser(inner_model_ema, sigma_data=model_config["sigma_data"]).to(device) #K.config.make_denoiser_wrapper(config)(inner_model_ema)
 
-            state_path = Path(f'results/{sampling_method}/fold_{current_fold}/class_{class_label}/{args.name}_fold_{current_fold}_class_{class_label}_state.json')
+            # state_path = Path(f'results/{sampling_method}/fold_{current_fold}/class_{class_label}/{args.name}_fold_{current_fold}_class_{class_label}_state.json')
 
             if state_path.exists() or args.resume:
                 if args.resume:
@@ -252,6 +305,7 @@ def main():
                     ckpt_path = state['latest_checkpoint']
                 if accelerator.is_main_process:
                     print(f'Resuming from {ckpt_path}...')
+                
                 ckpt = torch.load(ckpt_path, map_location='cpu')
                 accelerator.unwrap_model(model.inner_model).load_state_dict(ckpt['model'])
                 accelerator.unwrap_model(model_ema.inner_model).load_state_dict(ckpt['model_ema'])

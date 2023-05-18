@@ -69,12 +69,12 @@ on all nodes, then running:
 For LOTO approach:
 
 ```sh
-$ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loto.json --epochs 10000 --batch-size 16 > train_loto.log &
+$ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loto.json --max-epochs 10000 --batch-size 16 > train_loto.log &
 ```
 For LOSO approach:
 
 ```sh
-$ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loso.json --epochs 10000 --batch-size 16 > train_loso.log &
+$ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loso.json --max-epochs 10000 --batch-size 16 > train_loso.log &
 ```
 
 on all nodes.
@@ -101,6 +101,10 @@ Create splits of images for train/test and assess the quality of synthetic image
 
 ```sh
 $ nohup ./tgen/data.py --config configs/config_wisdm_128x128_loto.json --prefix exp-classes-all-classes --class-names 0,1,2,3,4 --splits 0,1,2 > data_splits-loto.log &
+```
+
+```sh
+$ nohup ./tgen/data.py --config configs/config_wisdm_128x128_loso.json --prefix exp-classes-all-classes --class-names 0,1,2,3,4 --splits 0,1,2 > data_splits-loso.log &
 ```
 
 # Evaluation 
