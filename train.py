@@ -46,8 +46,8 @@ def main():
                    help='the maximum epochs')
     p.add_argument('--n-folds', type=int, default=3,
                    help='the number of k-fold validation')
-    p.add_argument('--n-classes', type=int, default=5,
-                   help='the number of class labels')
+    p.add_argument('--class-names', type=str, default="0,1,2,3,4",
+                   help='the class labels')
     p.add_argument('--config', type=str, default="configs/config_wisdm_128x128_loso.json",
                    help='the configuration file')
     p.add_argument('--demo-every', type=int, default=500,
@@ -148,9 +148,12 @@ def main():
     sched_config = config['lr_sched']
     ema_sched_config = config['ema_sched']
     n_folds = args.n_folds
-    n_clases = args.n_classes
+    classes = [int(c) for c in args.class_names.split(",")]
+    print("Classes to train:", classes)
     
-    for class_label in tqdm(range(n_clases), desc="Class"):
+    for cl_idx in tqdm(range(len(classes)), desc="Class"):
+        class_label = classes[cl_idx]
+        print("Processing class:", class_label)
         for current_fold in tqdm(range(n_folds), desc=f"[Class {class_label}] Fold"):
             os.makedirs(f"demo/{sampling_method}/fold_{current_fold}/class_{class_label}", exist_ok=True)
             os.makedirs(f"results/{sampling_method}/fold_{current_fold}/class_{class_label}", exist_ok=True)

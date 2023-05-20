@@ -69,7 +69,7 @@ on all nodes, then running:
 For LOTO approach:
 
 ```sh
-$ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loto.json --max-epochs 10000 --batch-size 16 > train_loto.log &
+$ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loto.json --max-epochs 1000 --batch-size 16 > train_loto.log &
 ```
 For LOSO approach:
 
@@ -78,6 +78,12 @@ $ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loso.
 ```
 
 on all nodes.
+
+If you want to train only a single class set "--class-names" argument:
+
+```sh
+$ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loto.json --max-epochs 1000 --batch-size 16 --class-names 4 > train_loto.log &
+```
 
 # Sampling
 
