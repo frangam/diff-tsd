@@ -455,9 +455,10 @@ def main():
 
                         if evaluate_enabled and step > 0 and step % args.evaluate_every == 0:
                             evaluate()
-
-                        if step > 0 and step % args.save_every == 0:
                             save()
+
+                        # if step > 0 and step % args.save_every == 0:
+                        #     save()
 
                         step += 1
                     epoch += 1

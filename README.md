@@ -96,7 +96,11 @@ $  nohup ./sample.py --config configs/config_wisdm_128x128_loto.json -n 2000  > 
 ```sh
 $  nohup ./sample.py --config configs/config_wisdm_128x128_loso.json -n 2000  > sample-loso.log &
 ```
+By default, this uses the last diffusion model. But, we can use the best model based on the lower value of the FID metric, using "--best-model" argument:
 
+```sh
+$  nohup ./sample.py --config configs/config_wisdm_128x128_loto.json -n 2000 --best-model > sample-loto.log &
+```
 # Prepare to evaluate the shyntetic samples generated
 Create splits of images for train/test and assess the quality of synthetic images generated before.
 

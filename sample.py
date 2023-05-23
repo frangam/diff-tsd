@@ -5,6 +5,7 @@ import json
 import accelerate
 import torch
 from tqdm import trange, tqdm
+import pandas as pd
 
 import k_diffusion as K
 
@@ -31,12 +32,15 @@ def main():
                    help='the output folder')
     p.add_argument('--steps', type=int, default=50,
                    help='the number of denoising steps')
+    p.add_argument('--best-model', action="store_true", help='if set, use the best model; else, use the last model')
+
     args = p.parse_args()
 
     config = K.config.load_config(open(args.config))
     model_config = config['model']
     dataset_config = config['dataset']
     sampling_method = dataset_config["sampling"]
+    use_best_model = args.best_model
 
     # TODO: allow non-square input sizes
     assert len(model_config['input_size']) == 2 and model_config['input_size'][0] == model_config['input_size'][1]
@@ -48,12 +52,28 @@ def main():
 
     for cl in range(args.n_classes):
         for fold in range(args.n_folds):
-
-            with open(f"{args.result_folder}/{sampling_method}/fold_{fold}/class_{cl}/model_fold_{fold}_class_{cl}_state.json", 'r') as fcc_file:
-                fcc_data = json.load(fcc_file)
-                print(fcc_data["latest_checkpoint"])
-
-            ckpt = torch.load(fcc_data["latest_checkpoint"], map_location='cpu')
+            chp_path = ""
+            if use_best_model:
+                print("Getting the best bodel checkpoint")
+                metrics_path = f"{args.result_folder}{sampling_method}/fold_{fold}/class_{cl}/model_fold_{fold}_class_{cl}_metrics.csv"
+                met_df = pd.read_csv(metrics_path)
+                df_sorted = met_df.sort_values(by='fid')
+                steps_sorted_by_fid = df_sorted['step'].tolist()
+                for step in steps_sorted_by_fid:
+                    chp_path = f'{args.result_folder}{sampling_method}/fold_{fold}/class_{cl}/model_fold_{fold}_class_{cl}_{step:08}.pth'
+                    if os.path.exists(chp_path):
+                        print(f"El archivo existe en el paso {step}")
+                        break
+                    else:
+                        print(f"No se encontró archivo en el paso {step}")
+            else:
+                print("Getting the last model checkpoint")
+                with open(f"{args.result_folder}{sampling_method}/fold_{fold}/class_{cl}/model_fold_{fold}_class_{cl}_state.json", 'r') as fcc_file:
+                    fcc_data = json.load(fcc_file)
+                    print(fcc_data["latest_checkpoint"])
+                    chp_path = fcc_data["latest_checkpoint"]
+            print("Checkpoint path selected:", chp_path)
+            ckpt = torch.load(chp_path, map_location='cpu')
             # inner_model = K.config.make_model(config).eval().requires_grad_(False).to(device)
             inner_model = K.models.ImageDenoiserModelV1(
                 model_config['input_channels'], # input channels
