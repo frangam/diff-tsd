@@ -14,7 +14,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.applications.inception_v3 import preprocess_input
 
 
-from tgen import eval
+from tgen import eval, utils
 
 
 
@@ -40,6 +40,8 @@ def main():
     '''
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    p.add_argument('--gpu-id', type=int, default=0, help='the GPU device ID')
+
     p.add_argument('--model-name', type=str, default="lstm-cnn", #vgg16
                    help='the model name') #models: https://github.com/qubvel/classification_models    
                    #"resnet18", "resnet50", "densenet121", "mobilenet", "simple-cnn"
@@ -63,6 +65,8 @@ def main():
     p.add_argument('--config', type=str, default="configs/config_wisdm_128x128_loso.json",help='the configuration file')
 
     args = p.parse_args()
+
+    utils.set_gpu(args.gpu_id)
     
     config = K.config.load_config(open(args.config))
     dataset_config = config['dataset']

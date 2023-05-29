@@ -24,6 +24,8 @@ import argparse
 
 import k_diffusion as K
 
+from utils import set_gpu
+
 
 def main():
   '''Examples of runs:
@@ -40,6 +42,8 @@ def main():
   '''
   p = argparse.ArgumentParser(description=__doc__,
                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  p.add_argument('--gpu-id', type=int, default=0, help='the GPU device ID')
+
   p.add_argument('--batch-size', type=int, default=16,
                   help='the batch size')
   p.add_argument('--image-size', type=int, default=128,
@@ -55,6 +59,9 @@ def main():
   p.add_argument('--config', type=str, default="configs/config_wisdm_128x128_loso.json",help='the configuration file')
   
   args = p.parse_args()
+
+  set_gpu(args.gpu_id)
+
   # Copy TEST + synthetics images
   folds = args.n_folds
   classes = [int(c) for c in args.class_names.split(",")]

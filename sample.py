@@ -8,6 +8,7 @@ from tqdm import trange, tqdm
 import pandas as pd
 
 import k_diffusion as K
+from tgen.utils import set_gpu
 
 
 def main():
@@ -18,6 +19,8 @@ def main():
     '''
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    p.add_argument('--gpu-id', type=int, default=0, help='the GPU device ID')
+
     p.add_argument('--n-folds', type=int, default=3, help='the number of folds')
     p.add_argument('--n-classes', type=int, default=5, help='the number of classes')
 
@@ -35,6 +38,9 @@ def main():
     p.add_argument('--best-model', action="store_true", help='if set, use the best model; else, use the last model')
 
     args = p.parse_args()
+
+    set_gpu(args.gpu_id)
+
 
     config = K.config.load_config(open(args.config))
     model_config = config['model']
