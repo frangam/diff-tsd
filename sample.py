@@ -57,7 +57,9 @@ def main():
     print('Using device:', device, flush=True)
 
     for cl in range(args.n_classes):
+        print(f"Sampling [Class-{cl}]")
         for fold in range(args.n_folds):
+            print(f"Sampling [Class-{cl}] fold-{fold}")
             chp_path = ""
             if use_best_model:
                 print("Getting the best bodel checkpoint")

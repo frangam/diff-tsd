@@ -499,6 +499,7 @@ def generate_and_save_recurrence_plot(fold, dataset_folder, training_data, y_dat
 def generate_all_recurrence_plots(X_train, y_train, sj_train, dataset_folder="/home/fmgarmor/proyectos/TGEN-timeseries-generation/data/WISDM/", TIME_STEPS=129,  FOLDS_N=3, sampling="loso"):
   groups = sj_train 
   if sampling == "loto":
+    #TODO change 100 for an automatic extracted number greater than the max subject ID: max(sj_train)*10
     groups = [[int(sj[0])+i*100+np.argmax(y_train[i])+1] for i,sj in enumerate(sj_train)]
 
   # if DATASET_NAME == "WISDM": #since wisdm is quite balanced
