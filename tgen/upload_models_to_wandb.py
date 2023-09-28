@@ -44,7 +44,7 @@ def main():
                                       })
             artifact.add_file(model_path)
             # wandb.log_artifact(artifact, aliases=[f"epoch-{epoch}"])
-            wandb.log_artifact(artifact)
+            wandb.log_artifact(artifact, aliases=[f"v0"])
 
 
     # Finish Wandb run
