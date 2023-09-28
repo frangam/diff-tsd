@@ -34,7 +34,7 @@ def main():
             
             print(f"Uploading model {model_path} to Wandb...")
             
-            artifact = wandb.Artifact(f'model-{model_file.split(".")[0]}',
+            artifact = wandb.Artifact(f'{model_file.split(".")[0]}',
                                       type='model',
                                       metadata={
                                           'format': 'diffusion-model',
