@@ -75,7 +75,7 @@ __pycache__
 *.pth
 *.egg-info
 data
-*_demo_*.png
+demo
 *.csv
 .env
 downloads/*
