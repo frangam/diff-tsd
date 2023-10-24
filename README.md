@@ -1,4 +1,48 @@
-# Execution in background 
+# Official Implementation: Diff-TSD
+
+[![GitHub stars](https://img.shields.io/github/stars/frangam/diff-tsd.svg)](https://github.com/frangam/diff-tsd/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/frangam/diff-tsd.svg)](https://github.com/frangam/diff-tsd/network/members)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+Welcome to the official implementation repository of our paper titled "Diff-TSD: Modelling Time-series Data Generation with Diffusion Models". This repository provides detailed insights, datasets, and other essential resources related to our research and findings.
+
+## Introduction
+
+In our paper "Diff-TSD: Modelling Time-series Data Generation with Diffusion Models", we explore the potential and intricacies of generating time-series data using diffusion models. As an integral part of this work, this repository serves as a comprehensive platform to access the datasets, recurrence plots, and other relevant resources that were instrumental in our research.
+
+## Citation
+
+If you found our work useful, please consider citing:
+
+```bibtex
+@article{Garcia-Moreno2023DiffTSD,
+    title={Diff-TSD: Modelling Time-series Data Generation with Diffusion Models},
+    author={Garcia-Moreno, Francisco M.,and},
+    journal={Journal},
+    year={2023}
+}
+```
+
+## Dataset
+We used WISDM dataset. The [WISDM dataset](https://ieeexplore.ieee.org/document/8835065/) focuses on data from smartwatch wearables. Our study particularly delves into the dataset which records 51 subjects performing 18 daily activities, such as "walking" and "jogging". We've honed in on five non-hand-oriented activities: "walking", "jogging", "stairs" (both ascending and descending), "sitting", and "standing", amassing a total of 1,053,141 instances. Data collection utilized the smartwatch's accelerometer, recording at a frequency of 20 Hz. For a visual representation of the acceleration waveforms for each activity, see Fig. \ref{fig:vis}.
+
+### Activity Distribution of WISDM
+
+| Activity | Instances | Percentage |
+|----------|-----------|------------|
+| Standing | 216,529   | 20.6%      |
+| Sitting  | 213,018   | 20.2%      |
+| Walking  | 210,495   | 20.0%      |
+| Stairs   | 207,312   | 19.7%      |
+| Jogging  | 205,787   | 19.5%      |
+
+As is common in various studies [^1^] utilizing this dataset for classification tasks, we opted to segment the data into full non-overlapping windowed segments (FNOW). Each segment contains 129 data points. The choice of 129, while seemingly unusual, is intentional; one additional data point beyond the typical 128 [^1^] allows us to create recurrence plots of 128x128 pixels.
+
+[^1^]: Abdel-Salam, H., Pham, T., & Elgendi, M. (2021). A Benchmark Dataset and Evaluation of Human Activity Recognition on Smartphones. *Journal of Information*.
+
+
+
+## Execution in background 
 Also, you can run the script with [nohup](https://en.wikipedia.org/wiki/Nohup) which ignores the hangup signal. This means that you can close the terminal without stopping the execution. Also, don’t forget to add & so the script runs in the background:
 
 ```sh
@@ -27,14 +71,46 @@ then, kill the desired one:
 $ kill PID
 ```
 
-# Create Data Splits
+## Create Data Splits
 In all bash command, we can combine the use "nohup" command to execute a script withouth interuptions (avoiding terminal disconnections, etc.) and "&" symbol at the end of the command for a background execution. We also can use "> filename.log" to put the results in a log file.
 
-## Sampling techniques
+### Sampling techniques
 - The Leave-One-Trial-Out (LOTO) approach is a cutting-edge method in sample generation. Each trial encompasses a unique raw activity signal for a single subject, ensuring an impartial evaluation and facilitating the creation of a sufficient number of samples. Additionally, this technique prevents the duplication of trials with identical raw signals (trials of the same label) across both training and testing datasets.
 - The Leave-One-Subject-Out (LOSO) approach is a sampling technique inspired by the Leave-One-Trial-Out method. In this approach, all trials belonging to a single subject are considered as an indivisible unit, ensuring that there are no trials from the same subject duplicated in the training and testing datasets. This technique maintains data integrity and prevents potential biases caused by the presence of trials from the same subject in both datasets, allowing for a more robust and reliable evaluation of the model's performance. This technique is the most strict, which proposes a subject-wise approach instead record-wise, and in the literature is not commonly assessed, maybe due to its resulting lower accuracy.
 
-## Create Recurrence Plots
+
+### Our Recurrence plots Dataset 
+
+We performed two experiments: One using LOTO to compare our results with previous results and the other using LOSO.
+
+The table below presents the 3-fold data distribution for each sampling approach:
+
+| 3-Folds | FNOW + LOTO      |           |         | FNOW + LOSO      |           |         |
+|---------|------------------|-----------|---------|------------------|-----------|---------|
+|         | Train samples    | Test samples | Total  | Train samples    | Test samples | Total  |
+|---------|------------------|-----------|---------|------------------|-----------|---------|
+| Fold-1  | 5392            | 2672     | 8064    | 5408            | 2688     | 8096    |
+| Fold-2  | 5392            | 2688     | 8080    | 5344            | 2768     | 8112    |
+| Fold-3  | 5392            | 2672     | 8064    | 5456            | 2640     | 8096    |
+
+So, from the WISDEM dataset, we extracted [Recurrence plots](https://ieeexplore.ieee.org/document/8691521/) with a legnth of 129 points (128x128 pixels) were generated for each of the five selected classes across every fold. These plots, inspired by the work of Lu and Tong in "Robust Single Accelerometer-Based Activity Recognition Using Modified Recurrence Plot", are available for download on the Hugging Face platform.
+
+Below are links to the data for each sampling and fold combination:
+
+- [Recurrence Plots - LOSO - Fold 1](https://huggingface.co/datasets/frangam/WISDM-mod-recurrence-plot-sampling-loso_fold_1)
+- [Recurrence Plots - LOSO - Fold 2](https://huggingface.co/datasets/frangam/WISDM-mod-recurrence-plot-sampling-loso_fold_2)
+- [Recurrence Plots - LOSO - Fold 3](https://huggingface.co/datasets/frangam/WISDM-mod-recurrence-plot-sampling-loso_fold_3)
+- [Recurrence Plots - LOTO - Fold 1](https://huggingface.co/datasets/frangam/WISDM-mod-recurrence-plot-sampling-loto_fold_1)
+- [Recurrence Plots - LOTO - Fold 2](https://huggingface.co/datasets/frangam/WISDM-mod-recurrence-plot-sampling-loto_fold_2)
+- [Recurrence Plots - LOTO - Fold 3](https://huggingface.co/datasets/frangam/WISDM-mod-recurrence-plot-sampling-loto_fold_3)
+
+Click the respective links to access and download the desired datasets.
+
+
+
+### Create Recurrence Plots
+If you want to create recurrence plots:
+
 - "--create-numpies" is for create the first time the numpy arrays.
 - With "--sampling loto" you can select the sampling method "loto" or "loso" with "--sampling loso".
 
@@ -51,7 +127,8 @@ Then, we have to upload the recurrence plots to Huggingface platform:
  $ nohup ./tgen/upload_recurrence_plots_to_huggingface.py --sampling loto --huggingface-token YOUR_TOKEN > upload_rp_loto.log &
 ```
 
-# Training
+
+## Training
 First, activate your Python VENV where you have all dependencies installed:
 
 ```sh
@@ -85,7 +162,7 @@ If you want to train only a single class set "--class-names" argument:
 $ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loto.json --max-epochs 1000 --batch-size 16 --class-names 4 > train_loto.log &
 ```
 
-# Sampling
+## Sampling
 
 Generate "n" samples (in this case, 2.000).
 
@@ -117,8 +194,8 @@ $ nohup ./tgen/data.py --config configs/config_wisdm_128x128_loto.json --prefix 
 $ nohup ./tgen/data.py --config configs/config_wisdm_128x128_loso.json --prefix exp-classes-all-classes --class-names 0,1,2,3,4 --splits 0,1,2 > data_splits-loso.log &
 ```
 
-# Evaluation 
-## Evaluation of synthetic recurrence plots sampled
+## Evaluation 
+### Evaluation of synthetic recurrence plots sampled
 We can evaluate the synthetic sampled images in the recognition of activities. We can use a set of benchmarking [image classifiers](https://github.com/qubvel/classification_models).
 
 
@@ -127,21 +204,69 @@ Example of evaluation of synthtetic (using LOTO approach and xception model)
 $  nohup ./eval_diffusion.py --model-name xception --prefix exp-classes-all-classes --epochs 100 --synth-train --config configs/config_wisdm_128x128_loto.json > eval-synth-loto-xception.log &
 ```
 
-## Evaluation of real recurrence plots to compare with synthetic
+### Evaluation of real recurrence plots to compare with synthetic
 ```sh
 $  nohup ./eval_diffusion.py --model-name xception --prefix exp-classes-3-4 --epochs 100 --synth-train  --config configs/config_wisdm_128x128_loto.json > eval-real-loto-xception.log &
 ```
 
+## FID
+Measuring the FID of the synthetic images sampled.
+
+### Install pytorch-fid
+
+Install from [pip](https://pypi.org/project/pytorch-fid/):
+
+```
+pip install pytorch-fid
+```
+
+### Usage
+To compute the FID score between two datasets, where images of each dataset are contained in an individual folder:
+
+```sh
+python -m pytorch_fid results/next-image/synthetic/original/ results/next-image/synthetic/prediction/ --device cuda:0
+```
+
+### Using different layers for feature maps
+
+In difference to the official implementation, you can choose to use a different feature layer of the Inception network instead of the default `pool3` layer.
+As the lower layer features still have spatial extent, the features are first global average pooled to a vector before estimating mean and covariance.
+
+This might be useful if the datasets you want to compare have less than the otherwise required 2048 images.
+Note that this changes the magnitude of the FID score and you can not compare them against scores calculated on another dimensionality.
+The resulting scores might also no longer correlate with visual quality.
+
+You can select the dimensionality of features to use with the flag `--dims N`, where N is the dimensionality of features.
+The choices are:
+- 64:   first max pooling features
+- 192:  second max pooling features
+- 768:  pre-aux classifier features
+- 2048: final average pooling features (this is the default)
+
+```sh
+python -m pytorch_fid real_images_folder/ synthetic_images_folder/ --device cuda:0 --dims 64
+
+```
+
+Example with our data (change LOTO or LOSO approach in the paths and folds):
+
+Fold 0:
+
+```sh
+python -m pytorch_fid ~/proyectos/TGEN-timeseries-generation/results/fid/loto/real/fold_0/real_train/  ~/proyectos/TGEN-timeseries-generation/results/fid/loto/predicted/fold_0/train/ --device cuda:1 
+```
+
+Fold 1:
+
+```sh
+python -m pytorch_fid ~/proyectos/TGEN-timeseries-generation/results/fid/loto/real/fold_1/real_train/  ~/proyectos/TGEN-timeseries-generation/results/fid/loto/predicted/fold_1/train/ --device cuda:1 
+```
+
+Fold:2
+
+```sh
+python -m pytorch_fid ~/proyectos/TGEN-timeseries-generation/results/fid/loto/real/fold_2/real_train/  ~/proyectos/TGEN-timeseries-generation/results/fid/loto/predicted/fold_2/train/ --device cuda:1 
+```
 
 ---
 
-## Clone a repository
-
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
-
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
-
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
