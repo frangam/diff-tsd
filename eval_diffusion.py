@@ -12,11 +12,57 @@ import keras
 import k_diffusion as K
 from keras.preprocessing.image import ImageDataGenerator
 from keras.applications.inception_v3 import preprocess_input
-
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from tgen import eval, utils
 
 
+def compute_metrics_for_each_class(cm):
+    num_classes = cm.shape[0]
+    metrics = {}
+    
+    for i in range(num_classes):
+        # Treat current class as positive and all others as negative
+        tp = cm[i, i]
+        fp = sum(cm[:, i]) - tp
+        fn = sum(cm[i, :]) - tp
+        tn = np.sum(cm) - tp - fp - fn
+        
+        # Compute metrics for this class
+        precision = tp / (tp + fp) if tp + fp != 0 else 0
+        recall = tp / (tp + fn) if tp + fn != 0 else 0
+        f1 = 2 * (precision * recall) / (precision + recall) if precision + recall != 0 else 0
+        specificity = tn / (tn + fp) if tn + fp != 0 else 0
+        accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) != 0 else 0
+
+        metrics[f"class_{i}_precision"] = precision
+        metrics[f"class_{i}_recall"] = recall
+        metrics[f"class_{i}_f1"] = f1
+        metrics[f"class_{i}_specificity"] = specificity
+        metrics[f"class_{i}_accuracy"] = accuracy
+
+    return metrics
+
+
+def save_confusion_matrix(cm, path, normalized=False):
+    """Save the confusion matrix to a txt file and as an image."""
+    # Save to txt
+    with open(path + ".txt", 'w') as f:
+        for line in cm:
+            f.write("\t".join(str(x) for x in line))
+            f.write('\n')
+    
+    # Save as image
+    if normalized:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+
+    
+    plt.figure(figsize=(7.5, 5.5))
+    sns.heatmap(cm, annot=True, cmap="Blues")
+    plt.savefig(path + ".png")
 
 
 def main():
@@ -59,7 +105,7 @@ def main():
     p.add_argument('--prefix', type=str, default='exp-classes-all-classes',
                    help='the output prefix')
     p.add_argument('--epochs', type=int, default=100,
-                   help='the number of epochs')
+                   help='the number of epochs to train de image classifier')
     p.add_argument('--val-split', type=float, default=0.0,
                    help='if we use a validation split, indicate a value; if not, 0.0')
     p.add_argument('--config', type=str, default="configs/config_wisdm_128x128_loso.json",help='the configuration file')
@@ -95,6 +141,9 @@ def main():
     # test_set.set_transform(partial(K.utils.hf_datasets_augs_helper, transform=tf, image_key=dataset_config['image_key']))
     # print(test_set)
 
+
+
+
     # CLASS_NAMES = ["Walking", "Jogging", "Stairs", "Sitting", "Standing"]
     VALIDATION_ACCURACY = []
     VALIDATION_LOSS = []
@@ -116,6 +165,14 @@ def main():
 
     val_idg = ImageDataGenerator(rescale=1./255)
     test_idg = ImageDataGenerator(rescale=1./255)
+
+    all_predicted_class_indices = []
+    all_precisions = []
+    all_recalls = []
+    all_specificities = []
+    all_accs = []
+    all_f1s = []
+    all_metrics_per_fold = []
 
 
     for fold in range(args.n_folds):
@@ -191,13 +248,20 @@ def main():
         
         # STEP_SIZE_TRAIN=train_data_generator.n // train_data_generator.batch_size
         # STEP_SIZE_VALID=valid_data_generator.n // valid_data_generator.batch_size
-        STEP_SIZE_TEST=test_data_generator.n // test_data_generator.batch_size
+        # STEP_SIZE_TEST=test_data_generator.n // test_data_generator.batch_size
+        STEP_SIZE_TEST = np.ceil(test_data_generator.n / test_data_generator.batch_size)
+
 
         train_labels = (train_data_generator.class_indices)
+        print("Class original indices:", train_labels, "length:", len(train_labels))
+        print("Class indices:", test_data_generator.class_indices, "length:", len(test_data_generator.class_indices))
+        print("Class original labels:", train_data_generator.labels, "length:", len(train_data_generator.labels))
+
         train_labels = dict((v,k) for k,v in train_labels.items())
+        print("Class indices using dict((v,k) for k,v in train_labels.items()):", train_labels, "length:", len(train_labels))
+
         n_classes =  len(train_labels)
 
-        print("Class indices:", train_labels)
         print("Number of classes:", n_classes)
         print("Building model:", model_name)
 
@@ -217,27 +281,40 @@ def main():
         # eval.plot_train_eval(history, f"{p}% Synthetic Images") 
 
         # LOAD BEST MODEL to evaluate the performance of the model
-        model.load_weights(f"{dir_path}fold_{fold}/{model_name}/model_{model_name}")
+        # model.load_weights(f"{dir_path}fold_{fold}/{model_name}/model_{model_name}")
         
         # results = model.evaluate(valid_data_generator)
         # results = model.evaluate(valid_data_generator, steps=STEP_SIZE_TEST)
-        results = model.evaluate(test_data_generator, steps=STEP_SIZE_TEST, verbose=0)
+
+        results = model.evaluate(test_data_generator) #, steps=STEP_SIZE_TEST, verbose=0)
         results = dict(zip(model.metrics_names,results))
         print("Results - validation:", results)
         
         VALIDATION_ACCURACY.append(results['accuracy'])
         VALIDATION_LOSS.append(results['loss'])
 
-        keras.backend.clear_session()
+        
+  
         
         #confusion matrix of current fold
         # y_pred = model.predict(test_data_generator)
         test_data_generator.reset() #You need to reset the test_generator before whenever you call the predict_generator. This is important, if you forget to reset the test_generator you will get outputs in a weird order.
-        y_pred=model.predict(test_data_generator, steps=STEP_SIZE_TEST, verbose=0)
+        #ENSURE SAME LENGTH OF TRUE TEST_LABELS AND PREDICTIONS
+        y_pred = model.predict(test_data_generator, steps=STEP_SIZE_TEST)
+        print("steps",STEP_SIZE_TEST)
+        print("y_pred length",len(y_pred))
+
+
+
         # print("y_pred:", y_pred)
         predicted_class_indices = np.argmax(y_pred,axis=1)
-        # print("predicted_class_indices:", predicted_class_indices)
-        # predicted_class_indices_axis__1 = np.argmax(y_pred,axis=-1)
+        all_predicted_class_indices.append(predicted_class_indices)
+
+        for i,predicted_class_indices in enumerate(all_predicted_class_indices):
+            print("fold", i, "length", len(test_data_generator.labels), "true_class_indices:", test_data_generator.labels)
+            print("fold", i, "length", len(predicted_class_indices), "predicted_class_indices:", predicted_class_indices)
+       
+       # predicted_class_indices_axis__1 = np.argmax(y_pred,axis=-1)
         # print("predicted_class_indices_axis_-1:", predicted_class_indices_axis__1)
 
         #now predicted_class_indices has the predicted labels, but you can’t simply tell what the predictions are, because all you can see is numbers like 0,1,4,1,0,6…
@@ -245,57 +322,152 @@ def main():
         
         # print("original labels:", labels)
         test_labels = (test_data_generator.class_indices)
+        print("test indices true:", test_labels)
+        print("test labels true:", test_data_generator.labels)
+
         test_labels = dict((v,k) for k,v in test_labels.items())
+        print("test labels true using  test_labels.items():", test_labels)
+
         predictions = [test_labels[k] for k in predicted_class_indices]
-        # print("test labels true:", test_data_generator.labels)
-        # print("predictions:", predictions)
+        print("predictions:", predictions)
+        
+        # cm = confusion_matrix(test_data_generator.labels, predicted_class_indices)
+        # save_confusion_matrix(cm, f"{dir_path}fold_{fold}/{model_name}/cm_fold_{fold}")
+        # metrics_values = compute_metrics_for_each_class(cm)
+        # acc_per_class[f"Metrics [fold-{fold}]"] = metrics_values
+        cm = confusion_matrix(test_data_generator.labels, predicted_class_indices)
+        save_confusion_matrix(cm, f"{dir_path}fold_{fold}/{model_name}/cm_fold_{fold}")
+        metrics_values = compute_metrics_for_each_class(cm)
+        acc_per_class[f"Metrics [fold-{fold}]"] = metrics_values
+        
+        all_metrics_per_fold.append(metrics_values)
+
+
+        # Agregar a las listas de métricas globales
+        all_precisions.extend([metrics_values[key] for key in metrics_values if "precision" in key])
+        all_recalls.extend([metrics_values[key] for key in metrics_values if "recall" in key])
+        all_specificities.extend([metrics_values[key] for key in metrics_values if "specificity" in key])
+        all_accs.extend([metrics_values[key] for key in metrics_values if "accuracy" in key])
+        all_f1s.extend([metrics_values[key] for key in metrics_values if "f1" in key])
+
+
+        keras.backend.clear_session()
+
 
 
         # Finally, save the results to a CSV file.
-        print("Saving predictions")
-        filenames=test_data_generator.filenames
-        print("filenames:", len(filenames))
-        print("predictions:", len(predictions))
-        results=pd.DataFrame({"Filename": filenames, "Predictions": predictions})
-        os.makedirs(f"{dir_path}fold_{fold}/{model_name}/", exist_ok=True)
-        results.to_csv(f"{dir_path}fold_{fold}/{model_name}/prediction_results.csv",index=False)
+        # print("Saving predictions")
+        # filenames=test_data_generator.filenames
+        # print("filenames:", len(filenames))
+        # print("predictions:", len(predictions))
+        # results=pd.DataFrame({"Filename": filenames, "Predictions": predictions})
+        # os.makedirs(f"{dir_path}fold_{fold}/{model_name}/", exist_ok=True)
+        # results.to_csv(f"{dir_path}fold_{fold}/{model_name}/prediction_results.csv",index=False)
 
-        # y_pred = np.argmax(y_pred, axis=1) #-1) 
-        metrics = eval.plot_cm(
-            f'{dir_path}fold_{fold}/{model_name}/',
-            model_name,
-            test_data_generator.labels,
-            predicted_class_indices,
-            train_labels.values(),
-            normalized=True,
-            figsize=(12, 8),
-            suffix_name=f"_fold_{fold}"
-            )
+        # # y_pred = np.argmax(y_pred, axis=1) #-1) 
+        # metrics = eval.plot_cm(
+        #     f'{dir_path}fold_{fold}/{model_name}/',
+        #     model_name,
+        #     test_data_generator.labels,
+        #     predicted_class_indices,
+        #     train_labels.values(),
+        #     normalized=True,
+        #     figsize=(12, 8),
+        #     suffix_name=f"_fold_{fold}"
+        #     )
         
-        # laux = list(labels.values())
-        # for j,d in enumerate(diag):
-        #     if laux[j] not in acc_per_class:
-        #         acc_per_class[laux[j]] = []
-        #     acc_per_class[laux[j]].append(d)
+     
         
         # acc_per_class[f"Confussion Matrix metrics [fold-{fold}]"] = metrics
         acc_per_class[f"Average Accuracy [fold-{fold}]"] = [VALIDATION_ACCURACY[fold]]
         acc_per_class[f"Average Loss [fold-{fold}]"] = [VALIDATION_LOSS[fold]]
 
         # tf.keras.backend.clear_session()
-    acc_per_class[f"Average Accuracy"] = [np.mean(np.array(VALIDATION_ACCURACY))]
-    acc_per_class[f"Average Loss"] = [np.mean(np.array(VALIDATION_LOSS))]
+    # acc_per_class[f"Average Accuracy"] = [np.mean(np.array(VALIDATION_ACCURACY))]
+    # acc_per_class[f"Average Loss"] = [np.mean(np.array(VALIDATION_LOSS))]
 
-    print(acc_per_class)
+    # print(acc_per_class)
     
-    # av_cols = [f"fold-{f}" for f in range(args.n_folds)]
-    # av_cols.append("mean")
-    avg_accuracies_df = pd.DataFrame(acc_per_class)
-    os.makedirs(f"{dir_path}average/{model_name}/", exist_ok=True)
-    avg_accuracies_df.to_csv(f"{dir_path}average/{model_name}/test_accuracies.csv",index=False)
+
+    # avg_accuracies_df = pd.DataFrame(acc_per_class)
+    # os.makedirs(f"{dir_path}average/{model_name}/", exist_ok=True)
+    # avg_accuracies_df.to_csv(f"{dir_path}average/{model_name}/test_accuracies.csv",index=False)
 
     #plot only one, since all of them share the same architecture
-    keras.utils.plot_model(model, f"{dir_path}average/{model_name}/model_multi_input_and_output_model.png", show_shapes=True)
+    # keras.utils.plot_model(model, f"{dir_path}average/{model_name}/model_multi_input_and_output_model.png", show_shapes=True)
+
+
+
+
+    # avg_cm = np.mean([confusion_matrix(test_data_generator.labels, pc) for pc in all_predicted_class_indices], axis=0)
+    # save_confusion_matrix(avg_cm, f"{dir_path}average/{model_name}/avg_cm", normalized=True)
+
+
+    #---SAVE RESULTS
+    # Reshape para que cada fila represente un fold y cada columna una clase
+    all_precisions_matrix = np.array(all_precisions).reshape(args.n_folds, n_classes)
+    all_recalls_matrix = np.array(all_recalls).reshape(args.n_folds, n_classes)
+    all_specificities_matrix = np.array(all_specificities).reshape(args.n_folds, n_classes)
+    all_accs_matrix = np.array(all_accs).reshape(args.n_folds, n_classes)
+    all_f1s_matrix = np.array(all_f1s).reshape(args.n_folds, n_classes)
+
+    # Calcula el promedio y desviación estándar por fold
+    mean_precisions_per_fold = np.mean(all_precisions_matrix, axis=1)
+    std_precisions_per_fold = np.std(all_precisions_matrix, axis=1)
+
+    mean_recalls_per_fold = np.mean(all_recalls_matrix, axis=1)
+    std_recalls_per_fold = np.std(all_recalls_matrix, axis=1)
+
+    mean_specificities_per_fold = np.mean(all_specificities_matrix, axis=1)
+    std_specificities_per_fold = np.std(all_specificities_matrix, axis=1)
+
+    mean_accs_per_fold = np.mean(all_accs_matrix, axis=1)
+    std_accs_per_fold = np.std(all_accs_matrix, axis=1)
+
+    mean_f1s_per_fold = np.mean(all_f1s_matrix, axis=1)
+    std_f1s_per_fold = np.std(all_f1s_matrix, axis=1)
+
+    # calcula el promedio y desviación estándar de estos valores
+    mean_precision = np.mean(mean_precisions_per_fold)
+    std_precision = np.mean(std_precisions_per_fold)
+
+    mean_recall = np.mean(mean_recalls_per_fold)
+    std_recall = np.mean(std_recalls_per_fold)
+
+    mean_specificity = np.mean(mean_specificities_per_fold)
+    std_specificity = np.mean(std_specificities_per_fold)
+
+    mean_acc = np.mean(mean_accs_per_fold)
+    std_acc = np.mean(std_accs_per_fold)
+
+    mean_f1 = np.mean(mean_f1s_per_fold)
+    std_f1 = np.mean(std_f1s_per_fold)
+
+    os.makedirs(f"{dir_path}average/{model_name}/", exist_ok=True)
+    with open(f"{dir_path}average/{model_name}/metrics_summary.txt", 'w') as f:
+        
+        # Metrics per Fold and per Class
+        for fold_idx, metrics in enumerate(all_metrics_per_fold):
+            f.write(f"Metrics for Fold {fold_idx + 1}:\n")
+            for key, value in metrics.items():
+                f.write(f"{key}: {value:.4f}\n")
+            
+            # Metrics averaged over classes for this fold
+            f.write("\nAverage metrics for classes in this fold:\n")
+            f.write(f"Precision: {mean_precisions_per_fold[fold_idx]:.4f} ± {std_precisions_per_fold[fold_idx]:.4f}\n")
+            f.write(f"Recall: {mean_recalls_per_fold[fold_idx]:.4f} ± {std_recalls_per_fold[fold_idx]:.4f}\n")
+            f.write(f"Specificity: {mean_specificities_per_fold[fold_idx]:.4f} ± {std_specificities_per_fold[fold_idx]:.4f}\n")
+            f.write(f"Accuracy: {mean_accs_per_fold[fold_idx]:.4f} ± {std_accs_per_fold[fold_idx]:.4f}\n")
+            f.write(f"F1-Score: {mean_f1s_per_fold[fold_idx]:.4f} ± {std_f1s_per_fold[fold_idx]:.4f}\n")
+            f.write("\n-----------------------------\n")
+        
+        # Global Metrics averaged over all Folds and all Classes
+        f.write("\nOverall Average Metrics (averaged over all folds and classes):\n")
+        f.write(f"Mean Accuracy: {mean_acc:.4f} ± {std_acc:.4f}\n")
+        f.write(f"Mean F1-Score: {mean_f1:.4f} ± {std_f1:.4f}\n")
+        f.write(f"Mean Precision: {mean_precision:.4f} ± {std_precision:.4f}\n")
+        f.write(f"Mean Recall: {mean_recall:.4f} ± {std_recall:.4f}\n")
+        f.write(f"Mean Specificity: {mean_specificity:.4f} ± {std_specificity:.4f}\n")
 
 
 if __name__ == '__main__':

@@ -77,8 +77,10 @@ def main():
     if args.opt_model_epoch:
         df_steps = pd.read_csv(f"{args.result_folder}{sampling_method}/model_steps_selection.csv")
         print(df_steps)
-        df_steps = df_steps[df_steps['epoch'] == int(args.opt_model_epoch)]
-        opt_model_steps = {(row['fold'], row['class']): row['step'] for _, row in df_steps.iterrows()}
+        df_steps = df_steps[df_steps['epoch'].astype(int) == int(args.opt_model_epoch)]
+        df_steps.dropna(subset=['fold', 'class', 'step'], inplace=True)
+        print(df_steps)
+        opt_model_steps = {(int(row['fold']), int(row['class'])): int(row['step']) for _, row in df_steps.iterrows()}
         print(opt_model_steps)
 
 
