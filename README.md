@@ -24,7 +24,7 @@ If you found our work useful, please consider citing:
 ```
 
 ## Dataset
-We used WISDM dataset. The [WISDM dataset](https://ieeexplore.ieee.org/document/8835065/) focuses on data from smartwatch wearables. Our study particularly delves into the dataset which records 51 subjects performing 18 daily activities, such as "walking" and "jogging". We've honed in on five non-hand-oriented activities: "walking", "jogging", "stairs" (both ascending and descending), "sitting", and "standing", amassing a total of 1,053,141 instances. Data collection utilized the smartwatch's accelerometer, recording at a frequency of 20 Hz. For a visual representation of the acceleration waveforms for each activity, see Fig. \ref{fig:vis}.
+We used WISDM dataset. The [WISDM dataset](https://ieeexplore.ieee.org/document/8835065/) focuses on data from smartwatch wearables. Our study particularly delves into the dataset which records 51 subjects performing 18 daily activities, such as "walking" and "jogging". We've honed in on five non-hand-oriented activities: "walking", "jogging", "stairs" (both ascending and descending), "sitting", and "standing", amassing a total of 1,053,141 instances. Data collection utilized the smartwatch's accelerometer, recording at a frequency of 20 Hz. For a visual representation of the acceleration waveforms for each activity.
 
 ### Activity Distribution of WISDM
 
@@ -43,7 +43,7 @@ As is common in various studies [^1^] utilizing this dataset for classification 
 
 
 ## Execution in background 
-Also, you can run the script with [nohup](https://en.wikipedia.org/wiki/Nohup) which ignores the hangup signal. This means that you can close the terminal without stopping the execution. Also, don’t forget to add & so the script runs in the background:
+You can run the scripts with [nohup](https://en.wikipedia.org/wiki/Nohup) which ignores the hangup signal. This means that you can close the terminal without stopping the execution. Also, don’t forget to add & so the script runs in the background:
 
 ```sh
 $ nohup accelerate launch train.py --config CONFIG_FILE  > your.log &
@@ -71,7 +71,7 @@ then, kill the desired one:
 $ kill PID
 ```
 
-## Create Data Splits
+## 1. Create Data Splits
 In all bash command, we can combine the use "nohup" command to execute a script withouth interuptions (avoiding terminal disconnections, etc.) and "&" symbol at the end of the command for a background execution. We also can use "> filename.log" to put the results in a log file.
 
 ### Sampling techniques
@@ -128,7 +128,7 @@ Then, we have to upload the recurrence plots to Huggingface platform:
 ```
 
 
-## Training
+## 2. Training
 First, activate your Python VENV where you have all dependencies installed:
 
 ```sh
@@ -162,7 +162,7 @@ If you want to train only a single class set "--class-names" argument:
 $ nohup accelerate launch ./train.py --config configs/config_wisdm_128x128_loto.json --max-epochs 1000 --batch-size 16 --class-names 4 > train_loto.log &
 ```
 
-## Sampling
+## 3. Sampling
 
 Generate "n" samples (in this case, 2.000).
 
@@ -178,7 +178,8 @@ By default, this uses the last diffusion model. But, we can use the best model b
 ```sh
 $  nohup ./sample.py --config configs/config_wisdm_128x128_loto.json -n 2000 --best-model > sample-loto.log &
 ```
-# Prepare to evaluate the shyntetic samples generated
+
+### 4. Prepare to evaluate the shyntetic samples generated
 Create splits of images for train/test and assess the quality of synthetic images generated before.
 
 - Synthetic images are the train set.
@@ -194,7 +195,7 @@ $ nohup ./tgen/data.py --config configs/config_wisdm_128x128_loto.json --prefix 
 $ nohup ./tgen/data.py --config configs/config_wisdm_128x128_loso.json --prefix exp-classes-all-classes --class-names 0,1,2,3,4 --splits 0,1,2 > data_splits-loso.log &
 ```
 
-## Evaluation 
+## 5. Evaluation 
 ### Evaluation of synthetic recurrence plots sampled
 We can evaluate the synthetic sampled images in the recognition of activities. We can use a set of benchmarking [image classifiers](https://github.com/qubvel/classification_models).
 
@@ -209,7 +210,7 @@ $  nohup ./eval_diffusion.py --model-name xception --prefix exp-classes-all-clas
 $  nohup ./eval_diffusion.py --model-name xception --prefix exp-classes-3-4 --epochs 100 --synth-train  --config configs/config_wisdm_128x128_loto.json > eval-real-loto-xception.log &
 ```
 
-## FID
+### FID
 Measuring the FID of the synthetic images sampled.
 
 ### Install pytorch-fid
