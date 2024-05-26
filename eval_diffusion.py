@@ -93,6 +93,8 @@ def main():
                    #"resnet18", "resnet50", "densenet121", "mobilenet", "simple-cnn"
     p.add_argument('--synth-train', action="store_true",
                    help='use synthetic images for train; if not, use real images') 
+    p.add_argument('--real-and-synth-train', action="store_true",
+                   help='use real and synthetic images for train; if not, use the flag --synth-train') 
     p.add_argument('--prefered-device', type=int, default=-1, help='the prefered device to run the model')    
     p.add_argument('--img-batch-size', type=int, default=16,
                    help='the batch size for loading the images')         
@@ -119,7 +121,9 @@ def main():
     sampling_method = dataset_config["sampling"]
 
     use_synth_images_for_train = args.synth_train
+    use_real_and_synth_for_train = args.real_and_synth_train
     print("use synthetic images for train?: ", use_synth_images_for_train)
+    print("use a combination of real and synthetic images for train?: ", use_real_and_synth_for_train)
     val_split = args.val_split
     model_name = args.model_name
     img_size = args.image_size
@@ -154,7 +158,10 @@ def main():
 
     dir_path = f"results/evaluation_synthetic_quality/{sampling_method}/{args.prefix}/result_models_trained_on_real_images/" 
     if use_synth_images_for_train:
-        dir_path = f"results/evaluation_synthetic_quality/{sampling_method}/{args.prefix}/result_models_trained_on_synthetic_images/" 
+        dir_path = f"results/evaluation_synthetic_quality/{sampling_method}/{args.prefix}/result_models_trained_on_synthetic_images/"
+    if use_real_and_synth_for_train:
+        dir_path = f"results/evaluation_synthetic_quality/{sampling_method}/{args.prefix}/result_models_trained_on_both_real_and_synthetic_images/"
+
     os.makedirs(dir_path, exist_ok=True)
     # release GPU Memory
     # K.clear_session()
@@ -195,6 +202,7 @@ def main():
         #training data are the synthetic images
         
         if val_split < 0:
+            print("val_split < 0")
             train_data_generator = train_idg.flow_from_dataframe(train_data, batch_size=img_batch_size, target_size=(img_size, img_size), directory = train_path,
                             x_col = "filename", y_col = "label",
                             # class_mode = "raw", 
@@ -203,6 +211,7 @@ def main():
                             )
             valid_data_generator = None
         elif val_split > 0:
+            print("val_split > 0")
             train_data_generator = train_idg.flow_from_dataframe(train_data, batch_size=img_batch_size, target_size=(img_size, img_size), directory = train_path,
                         subset='training',
                         x_col = "filename", y_col = "label",
@@ -219,6 +228,7 @@ def main():
                         shuffle = True, seed=33
                         )
         else:
+            print("val_split == 0")
             train_data_generator = train_idg.flow_from_dataframe(train_data, batch_size=img_batch_size, target_size=(img_size, img_size), directory = train_path,
                         x_col = "filename", y_col = "label",
                         # class_mode = "raw", 

@@ -26,7 +26,7 @@ def get_time_setup(DATASET_NAME = "WISDM"):
         TIME_SECS = 6.4#2.56 #in secs
     elif DATASET_NAME == "ADL_Dataset": 
         DATASET_HZ = 32
-        TIME_SECS = 10 #in secs
+        TIME_SECS = 4 #in secs
     elif "MINDER":
         DATASET_HZ = 4 #4 hours
         TIME_SECS = 60 #in secs
@@ -88,13 +88,16 @@ def preprocess_activity_data_sets(DATASET_NAME="WISDM", dataset_folder="/home/fm
         df['z_axis'] = df.z_axis.astype(np.float64)
         df.dropna(axis=0, how='any', inplace=True)
     elif DATASET_NAME == "ADL_Dataset":
+        #WISDM: ['Walking', 'Jogging', 'Stairs', 'Sitting', 'Standing']
         #SELECTION OF CLASSES BASED ON RESULTS OF ORIGINAL PAPER: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6630784
         #Although in Recurrece Plot paper used other classes: https://s3.us-west-2.amazonaws.com/secure.notion-static.com/49ad9327-4337-4815-8472-15e77ed153b0/Robust_Single_Accelerometer-Based_Activity_Recognition_Using_Modified_Recurrence_Plot.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20220922%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20220922T153910Z&X-Amz-Expires=86400&X-Amz-Signature=15312ceb0ee9c5d01ee994c7cce25e4bcbf3a85821e52902aaad36bd910f499e&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Robust_Single_Accelerometer-Based_Activity_Recognition_Using_Modified_Recurrence_Plot.pdf%22&x-id=GetObject
         #Original ddbb paper got better results with the following classes:
-        adls = ["Climb_stairs", "Drink_glass", "Getup_bed", "Pour_water", "Sitdown_chair", "Standup_chair", "Walk"]
+        # adls = ["Climb_stairs", "Drink_glass", "Getup_bed", "Pour_water", "Sitdown_chair", "Standup_chair", "Walk"]
         # adls = ["Brush_teeth", "Climb_stairs", "Comb_hair", "Descend_stairs"
         # , "Drink_glass", "Eat_meat", "Eat_soup", "Getup_bed", "Liedown_bed"
         # , "Pour_water", "Sitdown_chair", "Standup_chair", "Use_telephone", "Walk"]
+        adls = ["Walk", "Descend_stairs", "Climb_stairs", "Sitdown_chair", "Standup_chair"]
+
 
         # class_names = adls
         dfs = []
@@ -105,8 +108,8 @@ def preprocess_activity_data_sets(DATASET_NAME="WISDM", dataset_folder="/home/fm
         df_final = []
         timestamps = []
         for adl in adls:
-            path = f'ADL_Dataset/HMP_Dataset/{adl}/'
-            print(f"Processing {adl}")
+            path = f'{dataset_folder}HMP_Dataset/{adl}/'
+            print(f"Path{path}; Processing {adl}")
             files = os.listdir(path)
             for f in files:
                 id = f.split("-")[8].split(".")[0]
